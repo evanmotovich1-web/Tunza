@@ -1,5 +1,7 @@
 /** V1 care-path component. Reused across household, CHP, and facility. */
 
+import { t, type Locale } from "@/lib/copy";
+
 export type Choice = {
   id: string;
   label: string;
@@ -21,6 +23,7 @@ type EntryProps = {
 };
 
 type Props = {
+  locale: Locale;
   question: string;
   hint?: string;
   choices?: Choice[];
@@ -32,6 +35,7 @@ type Props = {
 };
 
 export function AssessmentQuestion({
+  locale,
   question,
   hint,
   choices = [],
@@ -44,13 +48,13 @@ export function AssessmentQuestion({
   return (
     <section className="flex flex-col gap-5">
       <header className="flex flex-col gap-2">
-        <h1 className="text-[1.65rem] font-semibold leading-tight tracking-tight text-ink">
+        <h1 className="text-decision font-semibold tracking-tight text-ink">
           {question}
         </h1>
-        {hint ? <p className="text-[0.95rem] leading-snug text-ink-soft">{hint}</p> : null}
+        {hint ? <p className="text-body text-ink-soft">{hint}</p> : null}
       </header>
 
-      {entry ? <EntryControls {...entry} /> : null}
+      {entry ? <EntryControls locale={locale} {...entry} /> : null}
 
       {choices.length > 0 ? (
         <div className="flex flex-col gap-2" role="group" aria-label={question}>
@@ -58,7 +62,7 @@ export function AssessmentQuestion({
             <button
               key={choice.id}
               type="button"
-              className="min-h-14 rounded-2xl border border-line bg-raised px-4 py-3 text-left text-[1.05rem] font-medium text-ink shadow-[0_1px_0_rgba(28,25,22,0.04)] transition hover:border-ink/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
+              className="min-h-14 rounded-2xl border border-line bg-raised px-4 py-3 text-left text-body font-medium text-ink shadow-[0_1px_0_rgba(28,25,22,0.04)] transition hover:border-ink/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-action"
               onClick={() => onChoose?.(choice.id)}
             >
               {choice.label}
@@ -72,7 +76,7 @@ export function AssessmentQuestion({
           type="button"
           disabled={action.disabled}
           onClick={action.onClick}
-          className="min-h-14 rounded-2xl bg-action px-4 text-[1.05rem] font-semibold text-action-ink disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-14 rounded-2xl bg-action px-4 text-body font-semibold text-action-ink disabled:cursor-not-allowed disabled:opacity-40"
         >
           {action.label}
         </button>
@@ -81,7 +85,7 @@ export function AssessmentQuestion({
       <button
         type="button"
         onClick={onDontKnow}
-        className="min-h-12 rounded-2xl border border-dashed border-ink/25 bg-transparent px-4 py-3 text-left text-[1rem] font-normal text-ink-soft"
+        className="min-h-12 rounded-2xl border border-dashed border-ink/25 bg-transparent px-4 py-3 text-left text-body font-normal text-ink-soft"
       >
         {dontKnowLabel}
       </button>
@@ -90,6 +94,7 @@ export function AssessmentQuestion({
 }
 
 function EntryControls({
+  locale,
   mode,
   onMode,
   text,
@@ -100,22 +105,32 @@ function EntryControls({
   speakMessage,
   photoAttached,
   onPhoto,
-}: EntryProps) {
+}: EntryProps & { locale: Locale }) {
+  const modes: { id: EntryMode; label: string }[] = [
+    { id: "speak", label: t("modeSpeak", locale) },
+    { id: "type", label: t("modeType", locale) },
+    { id: "photo", label: t("modePhoto", locale) },
+  ];
+
   return (
     <div className="flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-line/70 p-1" role="tablist" aria-label="How to answer">
-        {(["speak", "type", "photo"] as EntryMode[]).map((item) => (
+      <div
+        className="grid grid-cols-3 gap-1 rounded-xl bg-line/70 p-1"
+        role="tablist"
+        aria-label={t("entryAria", locale)}
+      >
+        {modes.map((item) => (
           <button
-            key={item}
+            key={item.id}
             type="button"
             role="tab"
-            aria-selected={mode === item}
-            onClick={() => onMode(item)}
-            className={`min-h-10 rounded-lg text-[0.9rem] font-medium capitalize ${
-              mode === item ? "bg-raised text-ink shadow-sm" : "text-ink-soft"
+            aria-selected={mode === item.id}
+            onClick={() => onMode(item.id)}
+            className={`min-h-10 rounded-lg text-label font-medium ${
+              mode === item.id ? "bg-raised text-ink shadow-sm" : "text-ink-soft"
             }`}
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </div>
@@ -125,32 +140,42 @@ function EntryControls({
           <button
             type="button"
             onClick={onSpeak}
-            className="min-h-14 rounded-2xl border border-line bg-raised px-4 text-left text-[1.05rem] font-semibold text-ink"
+            className="min-h-14 rounded-2xl border border-line bg-raised px-4 text-left text-body font-semibold text-ink"
           >
-            {listening ? "Listening…" : speakAvailable ? "Tap to speak" : "Speak isn’t available"}
+            {listening
+              ? t("listening", locale)
+              : speakAvailable
+                ? t("tapToSpeak", locale)
+                : t("speakNotAvailable", locale)}
           </button>
-          {speakMessage ? <p className="text-sm text-ink-soft">{speakMessage}</p> : null}
-          {text ? <p className="rounded-xl bg-raised px-3 py-2 text-ink">{text}</p> : null}
+          {speakMessage ? (
+            <p className="text-label text-ink-soft">{speakMessage}</p>
+          ) : null}
+          {text ? (
+            <p className="rounded-xl bg-raised px-3 py-2 text-body text-ink">{text}</p>
+          ) : null}
         </div>
       ) : null}
 
       {mode === "type" ? (
         <label className="flex flex-col gap-2">
-          <span className="text-sm font-medium text-ink-soft">Type what you see</span>
+          <span className="text-label font-medium text-ink-soft">
+            {t("typeWhatYouSee", locale)}
+          </span>
           <textarea
             value={text}
             onChange={(event) => onText(event.target.value)}
             rows={4}
-            className="resize-none rounded-2xl border border-line bg-raised px-4 py-3 text-[1.05rem] leading-snug text-ink outline-none focus:border-action"
-            placeholder="Fever, coughing, not drinking…"
+            className="resize-none rounded-2xl border border-line bg-raised px-4 py-3 text-body text-ink outline-none focus:border-action"
+            placeholder={t("whatPlaceholder", locale)}
           />
         </label>
       ) : null}
 
       {mode === "photo" ? (
         <div className="flex flex-col gap-3">
-          <label className="min-h-14 rounded-2xl border border-line bg-raised px-4 py-3 text-[1.05rem] font-medium text-ink">
-            {photoAttached ? "Photo attached (demo)" : "Take or choose a photo"}
+          <label className="min-h-14 rounded-2xl border border-line bg-raised px-4 py-3 text-body font-medium text-ink">
+            {photoAttached ? t("photoAttachedDemo", locale) : t("photoTake", locale)}
             <input
               type="file"
               accept="image/*"
@@ -165,23 +190,23 @@ function EntryControls({
           {photoAttached ? (
             <button
               type="button"
-              className="text-left text-sm font-medium text-ink-soft underline"
+              className="text-left text-label font-medium text-ink-soft underline"
               onClick={() => onPhoto(false)}
             >
-              Remove photo
+              {t("photoRemove", locale)}
             </button>
           ) : (
-            <p className="text-sm text-ink-soft">
-              Use this when a rash, wound, or breathing effort is easier to show than to describe.
-            </p>
+            <p className="text-label text-ink-soft">{t("photoHint", locale)}</p>
           )}
           <label className="flex flex-col gap-2">
-            <span className="text-sm font-medium text-ink-soft">Add a short note if you can</span>
+            <span className="text-label font-medium text-ink-soft">
+              {t("addNote", locale)}
+            </span>
             <textarea
               value={text}
               onChange={(event) => onText(event.target.value)}
               rows={2}
-              className="resize-none rounded-2xl border border-line bg-raised px-4 py-3 text-[1.05rem] text-ink outline-none focus:border-action"
+              className="resize-none rounded-2xl border border-line bg-raised px-4 py-3 text-body text-ink outline-none focus:border-action"
             />
           </label>
         </div>

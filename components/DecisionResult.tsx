@@ -1,9 +1,11 @@
 /** V1 care-path component. Reused across household, CHP, and facility. */
 
+import { t, type Locale } from "@/lib/copy";
 import type { DecisionKind } from "@/lib/types";
 import type { ReactNode } from "react";
 
 type Props = {
+  locale: Locale;
   kind: DecisionKind;
   headline: string;
   status: string;
@@ -20,6 +22,7 @@ const HEADLINE_COLOR: Record<DecisionKind, string> = {
 };
 
 export function DecisionResult({
+  locale,
   kind,
   headline,
   status,
@@ -30,22 +33,22 @@ export function DecisionResult({
   return (
     <section className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium uppercase tracking-[0.14em] text-ink-soft">
-          Next action
+        <p className="text-caption font-medium uppercase tracking-[0.14em] text-ink-soft">
+          {t("nextAction", locale)}
         </p>
         <h1
-          className={`text-[2.35rem] font-bold leading-[1.05] tracking-tight ${HEADLINE_COLOR[kind]}`}
+          className={`text-decision font-bold tracking-tight ${HEADLINE_COLOR[kind]}`}
         >
           {headline}
         </h1>
-        <p className="text-[1.05rem] font-semibold leading-snug text-ink">{status}</p>
+        <p className="text-body font-semibold text-ink">{status}</p>
       </header>
 
       {action ? (
         <button
           type="button"
           onClick={action.onClick}
-          className="min-h-14 rounded-2xl bg-action px-4 text-[1.05rem] font-semibold text-action-ink"
+          className="min-h-14 rounded-2xl bg-action px-4 text-body font-semibold text-action-ink"
         >
           {action.label}
         </button>
@@ -55,10 +58,10 @@ export function DecisionResult({
 
       {why && why.length > 0 ? (
         <details className="rounded-2xl border border-line bg-raised px-4 py-3">
-          <summary className="cursor-pointer text-[0.95rem] font-medium text-ink">
-            Why this?
+          <summary className="cursor-pointer text-label font-medium text-ink">
+            {t("whyThis", locale)}
           </summary>
-          <ul className="mt-3 flex flex-col gap-2 text-[0.95rem] text-ink-soft">
+          <ul className="mt-3 flex flex-col gap-2 text-label text-ink-soft">
             {why.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}

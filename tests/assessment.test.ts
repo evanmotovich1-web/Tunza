@@ -8,13 +8,13 @@ import {
 } from "../lib/assessment";
 import type { AssessmentAnswers } from "../lib/types";
 
-function fill(partial: Partial<AssessmentAnswers>): AssessmentAnswers {
+function fillAnswers(partial: Partial<AssessmentAnswers>): AssessmentAnswers {
   return { ...EMPTY_ANSWERS, ...partial };
 }
 
 describe("decide", () => {
   it("escalates unconscious presentation to go now before later questions", () => {
-    const answers = fill({
+    const answers = fillAnswers({
       who: "child",
       presentation: "He is unconscious and not waking",
     });
@@ -22,8 +22,19 @@ describe("decide", () => {
     expect(nextQuestion(answers, "what")).toBeNull();
   });
 
+  it("hears danger signs described in Kiswahili", () => {
+    const answers = fillAnswers({
+      who: "child",
+      presentation: "Ana kifafa na haamki",
+    });
+    const decision = decide(answers);
+    expect(decision.kind).toBe("go_now");
+    expect(decision.dangerSignKeys).toContain("dangerSeizure");
+    expect(decision.dangerSignKeys).toContain("dangerNotWaking");
+  });
+
   it("sends a child who cannot drink now", () => {
-    const answers = fill({
+    const answers = fillAnswers({
       who: "child",
       presentation: "fever",
       awake: "alert",
@@ -35,7 +46,7 @@ describe("decide", () => {
   });
 
   it("asks for care today for a child with fever who can drink", () => {
-    const answers = fill({
+    const answers = fillAnswers({
       who: "child",
       presentation: "fever and coughing",
       awake: "alert",
@@ -43,12 +54,14 @@ describe("decide", () => {
       drinking: "yes",
       duration: "two_days",
     });
-    expect(decide(answers).kind).toBe("get_care_today");
+    const decision = decide(answers);
+    expect(decision.kind).toBe("get_care_today");
+    expect(decision.reasonKeys).toContain("reasonChildFever");
     expect(nextQuestion(answers, "duration")).toBeNull();
   });
 
   it("monitors at home when awake, drinking, and breathing are fine", () => {
-    const answers = fill({
+    const answers = fillAnswers({
       who: "household_adult",
       presentation: "mild cough",
       awake: "alert",
@@ -56,11 +69,14 @@ describe("decide", () => {
       drinking: "yes",
       duration: "today",
     });
-    expect(decide(answers).kind).toBe("monitor_at_home");
+    const decision = decide(answers);
+    expect(decision.kind).toBe("monitor_at_home");
+    expect(decision.reasonKeys).toContain("reasonNoDanger");
+    expect(decision.watchSignKeys.length).toBeGreaterThan(0);
   });
 
   it("needs one more answer when the story and critical signs are unknown", () => {
-    const answers = fill({
+    const answers = fillAnswers({
       who: "unknown",
       presentation: "",
       awake: "unknown",
@@ -73,9 +89,9 @@ describe("decide", () => {
 });
 
 describe("missingInfo", () => {
-  it("reuses the same missing items for any role", () => {
-    const items = missingInfo(EMPTY_ANSWERS, "Can they walk into the facility?");
-    expect(items.map((item) => item.id)).toEqual([
+  it("reuses the same missing items for any role, in the asked language", () => {
+    const enItems = missingInfo(EMPTY_ANSWERS, "can_walk", "en");
+    expect(enItems.map((item) => item.id)).toEqual([
       "who",
       "what",
       "awake",
@@ -83,6 +99,11 @@ describe("missingInfo", () => {
       "drinking",
       "ask-more",
     ]);
+    const swItems = missingInfo(EMPTY_ANSWERS, "can_walk", "sw");
+    expect(swItems.map((item) => item.id)).toEqual(enItems.map((item) => item.id));
+    expect(swItems[swItems.length - 1].label).toBe(
+      "Je, anaweza kutembea hadi ndani ya kituo?",
+    );
   });
 });
 

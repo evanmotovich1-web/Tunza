@@ -2,8 +2,11 @@
 
 @theme {
   --font-sans: var(--font-inter), Roboto, system-ui, sans-serif;
+
+  /* Color. Urgency is the only loud thing in the system. */
   --color-ink: #1c1916;
   --color-ink-soft: #5c564c;
+  --color-ground: #e8e0d2;
   --color-paper: #f4efe6;
   --color-raised: #fffcf7;
   --color-line: #e2d8c8;
@@ -17,6 +20,18 @@
   --color-watch-soft: #e3eef7;
   --color-warn: #7a4e0b;
   --color-warn-soft: #f7edd6;
+
+  /* Type scale: five steps, nothing else. */
+  --text-decision: 1.75rem;
+  --text-decision--line-height: 2.125rem;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.625rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
 }
 
 html,
@@ -27,7 +42,7 @@ body {
 body {
   font-family: var(--font-inter), Roboto, system-ui, sans-serif;
   font-weight: 400;
-  background: #e8e0d2;
+  background: var(--color-ground);
   color: var(--color-ink);
 }
 

@@ -20,7 +20,7 @@ function ActiveSurface() {
   const { state, hydrated } = useCare();
 
   if (!hydrated) {
-    return <p className="font-medium text-ink-soft">Loading…</p>;
+    return <p className="text-body font-medium text-ink-soft">…</p>;
   }
 
   if (state.role === "chp") {

@@ -1,3 +1,4 @@
+import { fill, t, type CopyKey, type Locale } from "./copy";
 import type { AssessmentAnswers, DecisionKind } from "./types";
 
 export type HandoffFact = {
@@ -7,73 +8,119 @@ export type HandoffFact = {
   stale?: boolean;
 };
 
+const AWAKE_KEY: Record<string, CopyKey> = {
+  alert: "awakeAlert",
+  sleepy: "awakeSleepy",
+  not_waking: "awakeNotWaking",
+};
+
+const BREATHING_KEY: Record<string, CopyKey> = {
+  fine: "breathingFine",
+  difficult: "breathingDifficult",
+  severe: "breathingSevere",
+};
+
+const DRINKING_KEY: Record<string, CopyKey> = {
+  yes: "drinkingYes",
+  little: "drinkingLittle",
+  no: "drinkingNo",
+};
+
+const DURATION_KEY: Record<string, CopyKey> = {
+  today: "durationToday",
+  two_days: "durationTwoDays",
+  longer: "durationLonger",
+};
+
+function answerLabel(
+  value: string | null,
+  table: Record<string, CopyKey>,
+  locale: Locale,
+): string {
+  if (!value || !(value in table)) {
+    return t("unknownValue", locale);
+  }
+  return t(table[value], locale);
+}
+
 export function handoffFacts(
   answers: AssessmentAnswers,
   stale: boolean,
   assessedAt: string,
+  locale: Locale,
 ): HandoffFact[] {
-  const freshness = stale ? "recorded 8 months ago" : relativeMinutes(assessedAt);
-  const facts: HandoffFact[] = [
-    { label: "Who", value: whoValue(answers) },
+  const freshness = stale
+    ? t("freshnessOld", locale)
+    : fill(t("freshnessAssessedTpl", locale), { m: relativeMinutes(assessedAt) });
+  return [
+    { label: t("handoffWho", locale), value: whoValue(answers, locale) },
     {
-      label: "What they described",
-      value: answers.presentation.trim() || (answers.photoAttached ? "Photo only (demo)" : "Not described"),
+      label: t("handoffDescribed", locale),
+      value:
+        answers.presentation.trim() ||
+        (answers.photoAttached
+          ? t("handoffPhotoOnly", locale)
+          : t("handoffNotDescribed", locale)),
     },
-    { label: "Awake", value: labelOrUnknown(answers.awake) },
-    { label: "Breathing", value: labelOrUnknown(answers.breathing) },
-    { label: "Drinking", value: labelOrUnknown(answers.drinking) },
-    { label: "How long", value: labelOrUnknown(answers.duration) },
     {
-      label: "Temperature (demo)",
+      label: t("handoffAwake", locale),
+      value: answerLabel(answers.awake, AWAKE_KEY, locale),
+    },
+    {
+      label: t("handoffBreathing", locale),
+      value: answerLabel(answers.breathing, BREATHING_KEY, locale),
+    },
+    {
+      label: t("handoffDrinking", locale),
+      value: answerLabel(answers.drinking, DRINKING_KEY, locale),
+    },
+    {
+      label: t("handoffDuration", locale),
+      value: answerLabel(answers.duration, DURATION_KEY, locale),
+    },
+    {
+      label: t("handoffTemp", locale),
       value: "38.6 C",
       freshness,
       stale,
     },
   ];
-  return facts;
 }
 
 export function whyComing(
   answers: AssessmentAnswers,
   decisionKind: DecisionKind | null,
+  locale: Locale,
 ): string {
   const who =
     answers.who === "child"
-      ? "A child from a demo household"
+      ? t("whoSubjectChild", locale)
       : answers.who === "self"
-        ? "An adult (self) from a demo household"
-        : "A person from a demo household";
+        ? t("whoSubjectSelf", locale)
+        : t("whoSubjectOther", locale);
   if (decisionKind === "go_now") {
-    return `${who} needs urgent care. Danger signs were flagged in the community assessment.`;
+    return fill(t("whyComingUrgent", locale), { who });
   }
   if (decisionKind === "get_care_today") {
-    return `${who} should be seen today. This is not a wait-at-home case.`;
+    return fill(t("whyComingToday", locale), { who });
   }
-  return `${who} is on a Tunza referral.`;
+  return fill(t("whyComingDefault", locale), { who });
 }
 
-function whoValue(answers: AssessmentAnswers): string {
+function whoValue(answers: AssessmentAnswers, locale: Locale): string {
   switch (answers.who) {
     case "self":
-      return "Adult (self) · demo household";
+      return t("whoValueSelf", locale);
     case "household_adult":
-      return "Adult · demo household";
+      return t("whoValueAdult", locale);
     case "child":
-      return "Child · demo household";
+      return t("whoValueChild", locale);
     default:
-      return "Not specified · demo household";
+      return t("whoValueUnknown", locale);
   }
 }
 
-function labelOrUnknown(value: string | null): string {
-  if (!value || value === "unknown") {
-    return "Unknown";
-  }
-  return value.replaceAll("_", " ");
-}
-
-function relativeMinutes(iso: string): string {
+function relativeMinutes(iso: string): number {
   const then = new Date(iso).getTime();
-  const mins = Math.max(1, Math.round((Date.now() - then) / 60000));
-  return `assessed ${mins} min ago`;
+  return Math.max(1, Math.round((Date.now() - then) / 60000));
 }

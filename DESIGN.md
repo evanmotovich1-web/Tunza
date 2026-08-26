@@ -212,24 +212,30 @@ No second decorative typeface in the app. If Tunza wants a more ownable brand fe
 
 Color
 
-Urgency is the only loud thing in the system.
+Urgency is the only loud thing in the system. The implemented palette is warm paper rather than clinical white — the app should feel like a considered object, not a hospital form.
 
-  --urgent    #B3261E   Go now. Emergency states.
-  --today     #9A6A00   Get care today. Time-boxed states.
-  --steady    #1B6E4A   Monitor at home. Confirmed / accepted / safe.
-  --action    #0F5257   The one primary action on a screen.
-  --ink       #1A1C1E   primary text
-  --ink-soft  #45484D   supporting text
-  --line      #D9DCE0   borders, dividers
-  --surface   #FFFFFF   background
-  --surface-2 #F4F6F7   cards, secondary areas
+  --urgent       #8f2418   Go now. Emergency states.        (soft: #f8e4df)
+  --today        #8a4b12   Get care today. Time-boxed.      (soft: #f6e6d0)
+  --watch        #1d4a73   Monitor at home. Watch states.   (soft: #e3eef7)
+  --warn         #7a4e0b   Degraded states: offline, weak,  (soft: #f7edd6)
+                           stale, incomplete.
+  --action       #0d5c4d   The one primary action on a screen.
+  --ink          #1c1916   primary text
+  --ink-soft     #5c564c   supporting text
+  --line         #e2d8c8   borders, dividers
+  --ground       #e8e0d2   page ground behind the column
+  --paper        #f4efe6   the app surface
+  --raised       #fffcf7   cards, inputs
+
+One deliberate departure from the obvious: the monitor-at-home verdict is calm blue, not green. Green is reserved for the action color, so "stay home" never reads as "all clear, stop paying attention" — it reads as "keep watching."
 
 Rules:
 
   urgency colors appear only on decisions and status — never as decoration, never in illustration, never for emphasis;
   one action color, used by exactly one element per screen;
   text contrast at WCAG AA minimum, aimed at cheap screens in sunlight;
-  status is never communicated by color alone — always color plus words.
+  status is never communicated by color alone — always color plus words;
+  no raw hex in components — every color goes through these tokens.
 
 ⸻
 
@@ -253,7 +259,7 @@ One Next.js app (the existing stack: App Router, TypeScript, Tailwind, Supabase)
 
   tokens        Tailwind theme: the colors, type scale, spacing, radius above. No raw hex or px in components.
   components    the seven components, each implemented with all of its states — including failure and offline states — and tested in both languages.
-  translation   one module: (referral state × role × language) → presentation. The only place referral copy exists.
+  translation   one module: (referral state × role × language) → presentation. The only place referral copy exists. The copy table is typed so that a missing Kiswahili string is a compile error, not a runtime fallback.
   surfaces      household, CHP, facility — thin compositions of the seven components over the same data.
 
 Build order for v1:

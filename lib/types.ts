@@ -1,12 +1,19 @@
+import type { CopyKey } from "./copy";
+
 export type Role = "household" | "chp" | "facility";
 
+/**
+ * The canonical referral lifecycle from the README. Internal names never
+ * appear on screen; the copy layer translates them per role and language.
+ */
 export type ReferralStage =
-  | "prepared"
+  | "created"
   | "sent"
   | "received"
   | "accepted"
-  | "traveling"
+  | "patient_moving"
   | "arrived"
+  | "seen"
   | "completed"
   | "outcome_returned";
 
@@ -23,6 +30,14 @@ export type DecisionKind =
   | "get_care_today"
   | "monitor_at_home"
   | "need_one_more_answer";
+
+export type OutcomeCode =
+  | "treated"
+  | "referred_onward"
+  | "did_not_arrive"
+  | "unknown";
+
+export type AskMoreCode = "can_walk";
 
 export type PersonKind = "self" | "household_adult" | "child" | "unknown";
 
@@ -58,11 +73,12 @@ export type AssessmentAnswers = {
   mainProblem: MainProblemAnswer | null;
 };
 
+/** Decisions carry copy keys, not sentences — language is applied at render. */
 export type Decision = {
   kind: DecisionKind;
-  reasons: string[];
-  dangerSigns: string[];
-  watchSigns: string[];
+  reasonKeys: CopyKey[];
+  dangerSignKeys: CopyKey[];
+  watchSignKeys: CopyKey[];
 };
 
 export type ReferralHistoryEntry = {
@@ -80,8 +96,8 @@ export type Referral = {
   expectedArrivalMinutes: number;
   queued: boolean;
   failure: NamedFailure | null;
-  askMore: string | null;
-  outcome: string | null;
+  askMore: AskMoreCode | null;
+  outcome: OutcomeCode | null;
   history: ReferralHistoryEntry[];
   createdAt: string;
   updatedAt: string;
@@ -108,6 +124,7 @@ export type Encounter = {
 
 export type CareState = {
   role: Role;
+  locale: "en" | "sw";
   injectedFailures: NamedFailure[];
   encounter: Encounter | null;
   referral: Referral | null;

@@ -1,16 +1,15 @@
 /** V1 care-path component. Reused across household, CHP, and facility. */
 
-import type { NamedFailure } from "@/lib/types";
-
-type Named = NamedFailure | "danger_sign" | "watch_sign";
+import type { NamedWarning } from "@/lib/failures";
 
 type Props = {
-  named: Named;
+  named: NamedWarning;
+  eyebrow: string;
   title: string;
   body?: string;
 };
 
-const TONE: Record<Named, string> = {
+const TONE: Record<NamedWarning, string> = {
   offline: "bg-warn-soft text-warn",
   no_facility_response: "bg-today-soft text-today",
   redirected: "bg-watch-soft text-watch",
@@ -21,16 +20,16 @@ const TONE: Record<Named, string> = {
   watch_sign: "bg-watch-soft text-watch",
 };
 
-export function Warning({ named, title, body }: Props) {
+export function Warning({ named, eyebrow, title, body }: Props) {
   return (
     <aside
       className={`rounded-2xl px-4 py-3 ${TONE[named]}`}
       role="status"
       data-named-state={named}
     >
-      <p className="text-[0.8rem] font-medium uppercase tracking-[0.12em]">{named.replaceAll("_", " ")}</p>
-      <p className="mt-1 font-semibold leading-snug">{title}</p>
-      {body ? <p className="mt-1 text-[0.95rem] font-normal leading-snug opacity-90">{body}</p> : null}
+      <p className="text-caption font-medium uppercase tracking-[0.12em]">{eyebrow}</p>
+      <p className="mt-1 text-body font-semibold">{title}</p>
+      {body ? <p className="mt-1 text-label font-normal opacity-90">{body}</p> : null}
     </aside>
   );
 }
