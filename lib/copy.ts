@@ -10,6 +10,21 @@ export const DEFAULT_LOCALE: Locale = "en";
  * an explicit locale so nothing silently ships in one language.
  */
 const en = {
+  // Home — the landing surface, carried over from the earlier Tunza app
+  homeTagline: "Healthcare, anywhere, anytime.",
+  homeGetStarted: "Get started",
+  homeCardAssessTitle: "Check symptoms",
+  homeCardAssessDesc: "Text, voice or photo",
+  homeCardNearbyTitle: "Nearby facilities",
+  homeCardNearbyDesc: "See your area",
+  homeCardContinueTitle: "Continue",
+  homeMission:
+    "Built for community health workers where the nearest doctor may be hours away.",
+  homeHealthWorker: "Are you a health worker?",
+  nearbyTitle: "Nearby facilities",
+  facilityUrgentCapable: "Can take urgent cases",
+  facilityGeneralCare: "General care",
+
   // Who needs help?
   whoQuestion: "Who needs help?",
   whoSelf: "Me",
@@ -328,6 +343,20 @@ const en = {
 export type CopyKey = keyof typeof en;
 
 const sw: Record<CopyKey, string> = {
+  homeTagline: "Huduma ya afya, popote, wakati wowote.",
+  homeGetStarted: "Anza",
+  homeCardAssessTitle: "Angalia dalili",
+  homeCardAssessDesc: "Maandishi, sauti au picha",
+  homeCardNearbyTitle: "Vituo vya karibu",
+  homeCardNearbyDesc: "Ona eneo lako",
+  homeCardContinueTitle: "Endelea",
+  homeMission:
+    "Imetengenezwa kwa ajili ya wahudumu wa afya ya jamii ambapo daktari wa karibu anaweza kuwa masaa mengi mbali.",
+  homeHealthWorker: "Wewe ni mhudumu wa afya?",
+  nearbyTitle: "Vituo vya karibu",
+  facilityUrgentCapable: "Inaweza kupokea dharura",
+  facilityGeneralCare: "Huduma za kawaida",
+
   whoQuestion: "Nani anahitaji msaada?",
   whoSelf: "Mimi",
   whoAdult: "Mtu mzima nyumbani",

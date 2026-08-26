@@ -3,16 +3,73 @@
 import { AssessmentFlow } from "@/components/AssessmentFlow";
 import { CarePath } from "@/components/CarePath";
 import { DecisionResult } from "@/components/DecisionResult";
+import { FacilityCard } from "@/components/FacilityCard";
+import { HomeScreen } from "@/components/HomeScreen";
 import { Warning } from "@/components/Warning";
 import { decisionHeadline, decisionStatus } from "@/lib/assessment";
 import { t } from "@/lib/copy";
+import { DEMO_FACILITIES } from "@/lib/facilities";
 import { warningCopy } from "@/lib/failures";
+import { stageLabel } from "@/lib/referral";
 import { activeFailures, useCare } from "@/lib/store";
 
 export function HouseholdSurface() {
-  const { state } = useCare();
+  const { state, dispatch } = useCare();
   const encounter = state.encounter;
   const referral = state.referral;
+  const locale = state.locale;
+
+  if (state.view === "home") {
+    const continueDetail = referral
+      ? `${t("referralEyebrow", locale)} · ${stageLabel(referral.stage, locale)}`
+      : encounter?.decision
+        ? decisionHeadline(encounter.decision.kind, locale)
+        : encounter && encounter.asked.length > 0
+          ? t("homeCardAssessTitle", locale)
+          : null;
+    return (
+      <HomeScreen
+        locale={locale}
+        continueDetail={continueDetail}
+        onStart={() => dispatch.setView("path")}
+        onNearby={() => dispatch.setView("nearby")}
+        onContinue={() => dispatch.setView("path")}
+        onHealthWorker={() => dispatch.setRole("chp")}
+      />
+    );
+  }
+
+  if (state.view === "nearby") {
+    return (
+      <div className="flex flex-col gap-4">
+        <button
+          type="button"
+          onClick={() => dispatch.setView("home")}
+          className="self-start text-label font-medium text-ink-soft"
+        >
+          {t("back", locale)}
+        </button>
+        <h1 className="text-decision font-semibold tracking-tight text-ink">
+          {t("nearbyTitle", locale)}
+        </h1>
+        {DEMO_FACILITIES.map((facility) => (
+          <FacilityCard
+            key={facility.id}
+            locale={locale}
+            name={facility.name}
+            travelMinutes={facility.travelMinutes}
+            canHandle
+            services={facility.services}
+            statusLabel={
+              facility.canHandleUrgent
+                ? t("facilityUrgentCapable", locale)
+                : t("facilityGeneralCare", locale)
+            }
+          />
+        ))}
+      </div>
+    );
+  }
 
   if (referral && encounter) {
     return <CarePath role="household" />;

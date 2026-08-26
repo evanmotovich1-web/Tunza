@@ -21,6 +21,7 @@ import { createId, nowIso } from "./ids";
 import type {
   CareState,
   Encounter,
+  HouseholdView,
   NamedFailure,
   OutcomeCode,
   QuestionId,
@@ -43,6 +44,7 @@ type Action =
   | { type: "hydrate"; state: CareState }
   | { type: "setRole"; role: Role }
   | { type: "setLocale"; locale: Locale }
+  | { type: "setView"; view: HouseholdView }
   | { type: "setOnline"; online: boolean }
   | { type: "toggleFailure"; failure: NamedFailure }
   | { type: "startEncounter"; by: Role }
@@ -84,6 +86,7 @@ function newEncounter(by: Role): Encounter {
 export const initialCareState: CareState = {
   role: "household",
   locale: DEFAULT_LOCALE,
+  view: "home",
   injectedFailures: [],
   encounter: newEncounter("household"),
   referral: null,
@@ -102,6 +105,8 @@ function reducer(state: CareState, action: Action): CareState {
       return { ...state, role: action.role };
     case "setLocale":
       return { ...state, locale: action.locale };
+    case "setView":
+      return { ...state, view: action.view };
     case "setOnline":
       return { ...state, online: action.online };
     case "toggleFailure": {
@@ -269,6 +274,7 @@ function reducer(state: CareState, action: Action): CareState {
       return {
         ...initialCareState,
         role: state.role,
+        locale: state.locale,
         online: state.online,
         injectedFailures: [],
         encounter: newEncounter(state.role === "facility" ? "household" : state.role),
@@ -285,6 +291,7 @@ type CareContextValue = {
   dispatch: {
     setRole: (role: Role) => void;
     setLocale: (locale: Locale) => void;
+    setView: (view: HouseholdView) => void;
     toggleFailure: (failure: NamedFailure) => void;
     startEncounter: () => void;
     answer: (question: QuestionId, value: string) => void;
@@ -323,6 +330,7 @@ function readStoredState(): CareState {
         return {
           ...parsed,
           locale: parsed.locale ?? DEFAULT_LOCALE,
+          view: parsed.view ?? "home",
           online: navigator.onLine,
         };
       }
@@ -340,6 +348,7 @@ function makeDispatch(
   return {
     setRole: (nextRole) => dispatch({ type: "setRole", role: nextRole }),
     setLocale: (locale) => dispatch({ type: "setLocale", locale }),
+    setView: (view) => dispatch({ type: "setView", view }),
     toggleFailure: (failure) => dispatch({ type: "toggleFailure", failure }),
     startEncounter: () => dispatch({ type: "startEncounter", by: role }),
     answer: (question, value) => dispatch({ type: "answer", question, value }),

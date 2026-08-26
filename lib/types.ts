@@ -122,9 +122,13 @@ export type Encounter = {
   updatedAt: string;
 };
 
+/** The household surface's top-level view; other roles ignore it. */
+export type HouseholdView = "home" | "path" | "nearby";
+
 export type CareState = {
   role: Role;
   locale: "en" | "sw";
+  view: HouseholdView;
   injectedFailures: NamedFailure[];
   encounter: Encounter | null;
   referral: Referral | null;

@@ -2,6 +2,7 @@
 import { cleanup, render, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { AssessmentQuestion } from "../components/AssessmentQuestion";
+import { HomeScreen } from "../components/HomeScreen";
 import { AttentionNeeded } from "../components/AttentionNeeded";
 import { DecisionResult } from "../components/DecisionResult";
 import { FacilityCard } from "../components/FacilityCard";
@@ -18,6 +19,43 @@ const LOCALES: Locale[] = ["en", "sw"];
 const noop = () => {};
 
 afterEach(cleanup);
+
+describe("HomeScreen", () => {
+  it.each(LOCALES)("renders the landing with one dominant action (%s)", (locale) => {
+    const { getByText, queryByText } = render(
+      <HomeScreen
+        locale={locale}
+        continueDetail={null}
+        onStart={noop}
+        onNearby={noop}
+        onContinue={noop}
+        onHealthWorker={noop}
+      />,
+    );
+    expect(getByText(t("homeTagline", locale))).toBeTruthy();
+    expect(getByText(t("homeGetStarted", locale))).toBeTruthy();
+    expect(getByText(t("homeMission", locale))).toBeTruthy();
+    expect(getByText(t("homeHealthWorker", locale))).toBeTruthy();
+    expect(queryByText(t("homeCardContinueTitle", locale))).toBeNull();
+  });
+
+  it.each(LOCALES)("surfaces a live care path on the continue card (%s)", (locale) => {
+    const { getByText } = render(
+      <HomeScreen
+        locale={locale}
+        continueDetail={`${t("referralEyebrow", locale)} · ${t("stageAccepted", locale)}`}
+        onStart={noop}
+        onNearby={noop}
+        onContinue={noop}
+        onHealthWorker={noop}
+      />,
+    );
+    expect(getByText(t("homeCardContinueTitle", locale))).toBeTruthy();
+    expect(
+      getByText(`${t("referralEyebrow", locale)} · ${t("stageAccepted", locale)}`),
+    ).toBeTruthy();
+  });
+});
 
 describe("AssessmentQuestion", () => {
   it.each(LOCALES)("renders one question, choices, and I don't know (%s)", (locale) => {

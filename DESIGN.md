@@ -229,6 +229,8 @@ Because this is a health product, the red is carried under a strict two-red disc
 
   --action       #7c1f18   Tunza Red. The matte brand red; the one
                            primary action, the wordmark, focus.
+  --brand-deep   #4a1210   The deep end of the brand red — the home
+                           screen's ground, nothing else.
   --urgent       #b3261e   Emergencies only. Go now, danger signs.  (soft: #f8e4df)
   --today        #8a4b12   Get care today. Time-boxed.              (soft: #f6e6d0)
   --watch        #1d4a73   Monitor at home. Watch states.           (soft: #e3eef7)
@@ -240,6 +242,8 @@ Because this is a health product, the red is carried under a strict two-red disc
   --ground       #e8e0d2   page ground behind the column
   --paper        #f4efe6   the app surface
   --raised       #fffcf7   cards, inputs
+
+The front door wears the brand; every working screen wears paper. The household home screen — carried over from the earlier Tunza app's landing — is the one full-brand surface: a deep matte red ground (brand-deep to Tunza Red), the tagline, one inverted primary action (raised surface, brand-red text), quiet frosted cards for the secondary paths, and the mission line. The moment work begins, the product returns to paper, and red returns to being scarce.
 
 The monitor-at-home verdict stays calm blue, and doubly so now: red–green is the most impaired axis of human color vision, and with red carrying the brand there is no green in the product to be confused with. Amber for "today" and "degraded" follows the same severity ladder clinical alerting uses (red above orange above yellow).
 

@@ -33,6 +33,8 @@ function ratio(a: string, b: string): number {
 
 const TEXT_PAIRS: [string, string][] = [
   ["action-ink", "action"], // button text on the brand red
+  ["action-ink", "brand-deep"], // white text on the home screen's deep end
+  ["action", "raised"], // the inverted home CTA: brand text on raised
   ["action", "paper"], // the wordmark and any brand-red text
   ["ink", "paper"],
   ["ink", "raised"],
