@@ -2,14 +2,20 @@
 
 @theme {
   --font-sans: var(--font-inter), Roboto, system-ui, sans-serif;
+
+  /* Color. Two reds, one discipline: the dark matte brand red is the action
+     role; the brighter, more saturated red belongs to emergencies alone.
+     tests/contrast.test.ts enforces both the WCAG pairs and the split. */
   --color-ink: #1c1916;
   --color-ink-soft: #5c564c;
+  --color-ground: #e8e0d2;
   --color-paper: #f4efe6;
   --color-raised: #fffcf7;
   --color-line: #e2d8c8;
-  --color-action: #0d5c4d;
+  --color-action: #7c1f18;
   --color-action-ink: #ffffff;
-  --color-urgent: #8f2418;
+  --color-brand-deep: #4a1210;
+  --color-urgent: #b3261e;
   --color-urgent-soft: #f8e4df;
   --color-today: #8a4b12;
   --color-today-soft: #f6e6d0;
@@ -17,6 +23,18 @@
   --color-watch-soft: #e3eef7;
   --color-warn: #7a4e0b;
   --color-warn-soft: #f7edd6;
+
+  /* Type scale: five steps, nothing else. */
+  --text-decision: 1.75rem;
+  --text-decision--line-height: 2.125rem;
+  --text-heading: 1.25rem;
+  --text-heading--line-height: 1.625rem;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5rem;
+  --text-label: 0.875rem;
+  --text-label--line-height: 1.125rem;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1rem;
 }
 
 html,
@@ -27,7 +45,7 @@ body {
 body {
   font-family: var(--font-inter), Roboto, system-ui, sans-serif;
   font-weight: 400;
-  background: #e8e0d2;
+  background: var(--color-ground);
   color: var(--color-ink);
 }
 

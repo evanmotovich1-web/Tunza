@@ -1,11 +1,14 @@
 /** V1 care-path component. Reused across household, CHP, and facility. */
 
+import { t, type Locale } from "@/lib/copy";
 import type { ReferralStage, Role } from "@/lib/types";
 import type { ReactNode } from "react";
 
 type Props = {
+  locale: Locale;
   role: Role;
   stage: ReferralStage;
+  stageLabel: string;
   headline: string;
   status: string;
   arrivalMinutes: number | null;
@@ -13,9 +16,29 @@ type Props = {
   children?: ReactNode;
 };
 
+/** Render a "{m}" copy template with the number in tabular figures. */
+function TemplateNumber({
+  template,
+  value,
+}: {
+  template: string;
+  value: number;
+}) {
+  const [before, after] = template.split("{m}");
+  return (
+    <>
+      {before}
+      <span className="tabular-nums">{value}</span>
+      {after}
+    </>
+  );
+}
+
 export function ReferralStatus({
+  locale,
   role,
   stage,
+  stageLabel,
   headline,
   status,
   arrivalMinutes,
@@ -28,23 +51,25 @@ export function ReferralStatus({
   return (
     <section className="flex flex-col gap-5" aria-live="polite">
       <header className="flex flex-col gap-3">
-        <p className="text-sm font-medium uppercase tracking-[0.14em] text-ink-soft">
-          Referral · {stage.replaceAll("_", " ")}
+        <p className="text-caption font-medium uppercase tracking-[0.14em] text-ink-soft">
+          {t("referralEyebrow", locale)} · {stageLabel}
         </p>
-        <h1 className="text-[1.85rem] font-semibold leading-[1.1] tracking-tight text-ink">
+        <h1 className="text-decision font-bold tracking-tight text-ink">
           {headline}
           {showArrivalInHeadline ? (
             <>
-              {" — expected arrival "}
-              <span className="tabular-nums">{arrivalMinutes} min</span>
+              {" — "}
+              <TemplateNumber
+                template={t("expectedArrivalTpl", locale)}
+                value={arrivalMinutes}
+              />
             </>
           ) : null}
         </h1>
-        <p className="text-[1.05rem] font-semibold leading-snug text-ink">{status}</p>
+        <p className="text-body font-semibold text-ink">{status}</p>
         {arrivalMinutes !== null && !showArrivalInHeadline ? (
-          <p className="text-[1rem] font-semibold text-ink-soft">
-            Travel{" "}
-            <span className="tabular-nums">{arrivalMinutes} min</span>
+          <p className="text-body font-semibold text-ink-soft">
+            <TemplateNumber template={t("travelTpl", locale)} value={arrivalMinutes} />
           </p>
         ) : null}
       </header>
@@ -53,7 +78,7 @@ export function ReferralStatus({
         <button
           type="button"
           onClick={action.onClick}
-          className="min-h-14 rounded-2xl bg-action px-4 text-[1.05rem] font-semibold text-action-ink"
+          className="min-h-14 rounded-2xl bg-action px-4 text-body font-semibold text-action-ink"
         >
           {action.label}
         </button>

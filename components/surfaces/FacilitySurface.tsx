@@ -3,22 +3,24 @@
 import { AssessmentQuestion } from "@/components/AssessmentQuestion";
 import { AttentionNeeded } from "@/components/AttentionNeeded";
 import { CarePath } from "@/components/CarePath";
-import { copy } from "@/lib/copy";
+import { t } from "@/lib/copy";
 import { useCare } from "@/lib/store";
+import type { OutcomeCode } from "@/lib/types";
 
 export function FacilitySurface() {
   const { state, dispatch } = useCare();
   const referral = state.referral;
+  const locale = state.locale;
 
   if (!referral) {
     return (
       <AttentionNeeded
-        title="Incoming"
+        title={t("incomingTitle", locale)}
         items={[
           {
             id: "none",
-            label: copy.noIncoming,
-            detail: copy.noIncomingDetail,
+            label: t("noIncoming", locale),
+            detail: t("noIncomingDetail", locale),
           },
         ]}
       />
@@ -28,15 +30,16 @@ export function FacilitySurface() {
   if (referral.stage === "completed" && !referral.outcome) {
     return (
       <AssessmentQuestion
-        question={copy.outcomeQuestion}
+        locale={locale}
+        question={t("outcomeQuestion", locale)}
         choices={[
-          { id: "Seen and treated", label: copy.outcomeTreated },
-          { id: "Needed a higher facility", label: copy.outcomeHigher },
-          { id: "Did not arrive", label: copy.outcomeNoShow },
+          { id: "treated", label: t("outcomeTreated", locale) },
+          { id: "referred_onward", label: t("outcomeHigher", locale) },
+          { id: "did_not_arrive", label: t("outcomeNoShow", locale) },
         ]}
-        dontKnowLabel={copy.dontKnow}
-        onDontKnow={() => dispatch.returnOutcome("Outcome not known")}
-        onChoose={(id) => dispatch.returnOutcome(id)}
+        dontKnowLabel={t("dontKnow", locale)}
+        onDontKnow={() => dispatch.returnOutcome("unknown")}
+        onChoose={(id) => dispatch.returnOutcome(id as OutcomeCode)}
       />
     );
   }

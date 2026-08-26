@@ -1,4 +1,6 @@
+import { t, type CopyKey, type Locale } from "./copy";
 import type {
+  AskMoreCode,
   AssessmentAnswers,
   Decision,
   DecisionKind,
@@ -26,21 +28,36 @@ export const QUESTION_ORDER: QuestionId[] = [
   "main_problem",
 ];
 
-const DANGER_PATTERNS: { re: RegExp; label: string }[] = [
-  { re: /unconscious|not waking|won'?t wake/, label: "Not waking" },
-  { re: /seizure|convulsion|fitting/, label: "Seizure" },
-  { re: /not breathing|stopped breathing/, label: "Not breathing" },
-  { re: /blue lips|blue face/, label: "Blue lips" },
+/**
+ * Demonstration triage rules, deliberately conservative. Danger patterns
+ * listen in English and Kiswahili. Not clinically validated — the deterministic
+ * safety layer described in the README replaces this before real use.
+ */
+const DANGER_PATTERNS: { re: RegExp; key: CopyKey }[] = [
   {
-    re: /bleeding (a lot|heavily|won'?t stop)|heavy bleeding/,
-    label: "Heavy bleeding",
+    re: /unconscious|not waking|won'?t wake|hajitambui|haamki/,
+    key: "dangerNotWaking",
+  },
+  { re: /seizure|convulsion|fitting|kifafa|degedege/, key: "dangerSeizure" },
+  { re: /not breathing|stopped breathing|hapumui/, key: "dangerNotBreathing" },
+  { re: /blue lips|blue face|midomo ya bluu/, key: "dangerBlueLips" },
+  {
+    re: /bleeding (a lot|heavily|won'?t stop)|heavy bleeding|damu nyingi/,
+    key: "dangerHeavyBleeding",
   },
 ];
 
-export function presentationDangerSigns(text: string): string[] {
+const WATCH_SIGN_KEYS: CopyKey[] = [
+  "watchNotWaking",
+  "watchBreathingHard",
+  "watchCannotDrink",
+  "watchSeizureBleeding",
+];
+
+export function presentationDangerSigns(text: string): CopyKey[] {
   const lower = text.toLowerCase();
   return DANGER_PATTERNS.filter((item) => item.re.test(lower)).map(
-    (item) => item.label,
+    (item) => item.key,
   );
 }
 
@@ -49,7 +66,9 @@ export function hasFever(text: string): boolean {
 }
 
 export function hasInjury(text: string): boolean {
-  return /wound|cut|bleed|injury|burn|fall|ajali/.test(text.toLowerCase());
+  return /wound|cut|bleed|injury|burn|fall|jeraha|ajali|damu/.test(
+    text.toLowerCase(),
+  );
 }
 
 function tooIncomplete(answers: AssessmentAnswers): boolean {
@@ -70,66 +89,61 @@ function confidentHomeWatch(answers: AssessmentAnswers): boolean {
 }
 
 export function decide(answers: AssessmentAnswers): Decision {
-  const dangerSigns: string[] = [...presentationDangerSigns(answers.presentation)];
-  const reasons: string[] = [];
-  const watchSigns = [
-    "Not waking or very sleepy",
-    "Breathing gets hard or fast",
-    "Cannot drink",
-    "Seizure or heavy bleeding",
+  const dangerSignKeys: CopyKey[] = [
+    ...presentationDangerSigns(answers.presentation),
   ];
+  const reasonKeys: CopyKey[] = [];
 
   if (answers.awake === "not_waking") {
-    dangerSigns.push("Not waking");
+    dangerSignKeys.push("dangerNotWaking");
   }
   if (answers.breathing === "severe") {
-    dangerSigns.push("Struggling to breathe");
+    dangerSignKeys.push("dangerStrugglingBreathe");
   }
   if (answers.drinking === "no" && answers.who === "child") {
-    dangerSigns.push("Child cannot drink");
+    dangerSignKeys.push("dangerChildNoDrink");
   }
   if (answers.mainProblem === "injury" && hasInjury(answers.presentation)) {
-    if (/heavy|won'?t stop|a lot/.test(answers.presentation.toLowerCase())) {
-      dangerSigns.push("Heavy bleeding");
+    if (/heavy|won'?t stop|a lot|nyingi/.test(answers.presentation.toLowerCase())) {
+      dangerSignKeys.push("dangerHeavyBleeding");
     }
   }
 
-  const uniqueDanger = [...new Set(dangerSigns)];
+  const uniqueDanger = [...new Set(dangerSignKeys)];
 
   if (uniqueDanger.length > 0) {
     return {
       kind: "go_now",
-      reasons: uniqueDanger.map((sign) => `Danger sign: ${sign}`),
-      dangerSigns: uniqueDanger,
-      watchSigns,
+      reasonKeys: uniqueDanger,
+      dangerSignKeys: uniqueDanger,
+      watchSignKeys: WATCH_SIGN_KEYS,
     };
   }
 
   if (answers.breathing === "difficult" && answers.awake === "sleepy") {
-    reasons.push("Sleepy and breathing is hard");
     return {
       kind: "go_now",
-      reasons,
-      dangerSigns: uniqueDanger,
-      watchSigns,
+      reasonKeys: ["reasonSleepyHardBreathing"],
+      dangerSignKeys: uniqueDanger,
+      watchSignKeys: WATCH_SIGN_KEYS,
     };
   }
 
   if (tooIncomplete(answers) && answers.mainProblem !== null) {
     return {
       kind: "need_one_more_answer",
-      reasons: ["Too little is known to choose safely"],
-      dangerSigns: uniqueDanger,
-      watchSigns,
+      reasonKeys: ["reasonTooLittleKnown"],
+      dangerSignKeys: uniqueDanger,
+      watchSignKeys: WATCH_SIGN_KEYS,
     };
   }
 
   if (tooIncomplete(answers) && answers.duration !== null) {
     return {
       kind: "need_one_more_answer",
-      reasons: ["One more question would make this safer"],
-      dangerSigns: uniqueDanger,
-      watchSigns,
+      reasonKeys: ["reasonOneMoreSafer"],
+      dangerSignKeys: uniqueDanger,
+      watchSignKeys: WATCH_SIGN_KEYS,
     };
   }
 
@@ -137,69 +151,69 @@ export function decide(answers: AssessmentAnswers): Decision {
 
   if (answers.breathing === "difficult") {
     kind = "get_care_today";
-    reasons.push("Breathing is harder than usual");
+    reasonKeys.push("reasonBreathingHarder");
   }
   if (answers.drinking === "little") {
     kind = "get_care_today";
-    reasons.push("Drinking only a little");
+    reasonKeys.push("reasonDrinkingLittle");
   }
   if (answers.drinking === "no") {
     kind = "get_care_today";
-    reasons.push("Not drinking");
+    reasonKeys.push("reasonNotDrinking");
   }
   if (answers.awake === "sleepy") {
     kind = "get_care_today";
-    reasons.push("Sleepy or harder to wake");
+    reasonKeys.push("reasonSleepy");
   }
   if (answers.who === "child" && hasFever(answers.presentation)) {
     kind = "get_care_today";
-    reasons.push("Child with fever");
+    reasonKeys.push("reasonChildFever");
   }
   if (answers.mainProblem === "fever" && answers.who === "child") {
     kind = "get_care_today";
-    reasons.push("Child with fever");
+    reasonKeys.push("reasonChildFever");
   }
   if (answers.mainProblem === "injury") {
     kind = "get_care_today";
-    reasons.push("Injury that should be seen");
+    reasonKeys.push("reasonInjurySeen");
   }
   if (answers.mainProblem === "breathing") {
     kind = "get_care_today";
-    reasons.push("Breathing is the main problem");
+    reasonKeys.push("reasonBreathingMain");
   }
   if (
     answers.duration === "longer" &&
     (hasFever(answers.presentation) || answers.mainProblem === "fever")
   ) {
     kind = "get_care_today";
-    reasons.push("This has gone on too long to only watch at home");
+    reasonKeys.push("reasonTooLongHome");
   }
 
   if (kind === "monitor_at_home") {
     if (!confidentHomeWatch(answers) && answers.mainProblem === null) {
       return {
         kind: "need_one_more_answer",
-        reasons: ["One more question would make this safer"],
-        dangerSigns: uniqueDanger,
-        watchSigns,
+        reasonKeys: ["reasonOneMoreSafer"],
+        dangerSignKeys: uniqueDanger,
+        watchSignKeys: WATCH_SIGN_KEYS,
       };
     }
     if (!confidentHomeWatch(answers) && tooIncomplete(answers)) {
       return {
         kind: "need_one_more_answer",
-        reasons: ["Too little is known to choose safely"],
-        dangerSigns: uniqueDanger,
-        watchSigns,
+        reasonKeys: ["reasonTooLittleKnown"],
+        dangerSignKeys: uniqueDanger,
+        watchSignKeys: WATCH_SIGN_KEYS,
       };
     }
-    reasons.push("Awake, drinking, and breathing do not show a danger sign");
+    reasonKeys.push("reasonNoDanger");
   }
 
   return {
     kind,
-    reasons: [...new Set(reasons)],
-    dangerSigns: uniqueDanger,
-    watchSigns,
+    reasonKeys: [...new Set(reasonKeys)],
+    dangerSignKeys: uniqueDanger,
+    watchSignKeys: WATCH_SIGN_KEYS,
   };
 }
 
@@ -300,51 +314,62 @@ export type MissingItem = {
 
 export function missingInfo(
   answers: AssessmentAnswers,
-  askMore: string | null,
+  askMore: AskMoreCode | null,
+  locale: Locale,
 ): MissingItem[] {
   const items: MissingItem[] = [];
 
   if (!answers.who || answers.who === "unknown") {
     items.push({
       id: "who",
-      label: "Who this is for is not clear",
-      detail: "Child, adult, or self changes what we ask next.",
+      label: t("missingWho", locale),
+      detail: t("missingWhoDetail", locale),
     });
   }
   if (!answers.presentation.trim() && !answers.photoAttached) {
-    items.push({
-      id: "what",
-      label: "What is happening was not described",
-    });
+    items.push({ id: "what", label: t("missingWhat", locale) });
   }
   if (!answers.awake || answers.awake === "unknown") {
-    items.push({ id: "awake", label: "Awake and responding is unknown" });
+    items.push({ id: "awake", label: t("missingAwake", locale) });
   }
   if (!answers.breathing || answers.breathing === "unknown") {
-    items.push({ id: "breathing", label: "Breathing is unknown" });
+    items.push({ id: "breathing", label: t("missingBreathing", locale) });
   }
   if (!answers.drinking || answers.drinking === "unknown") {
-    items.push({ id: "drinking", label: "Whether they can drink is unknown" });
+    items.push({ id: "drinking", label: t("missingDrinking", locale) });
   }
-  if (askMore) {
+  if (askMore === "can_walk") {
     items.push({
       id: "ask-more",
-      label: askMore,
-      detail: "The facility asked for this before accepting.",
+      label: t("askMoreCanWalk", locale),
+      detail: t("missingAskMoreDetail", locale),
     });
   }
   return items;
 }
 
-export function personLabel(who: AssessmentAnswers["who"]): string {
-  switch (who) {
-    case "self":
-      return "Adult (self)";
-    case "household_adult":
-      return "Adult in the household";
-    case "child":
-      return "Child in the household";
-    default:
-      return "Person not specified";
+export function decisionHeadline(kind: DecisionKind, locale: Locale): string {
+  switch (kind) {
+    case "go_now":
+      return t("goNow", locale);
+    case "get_care_today":
+      return t("getCareToday", locale);
+    case "monitor_at_home":
+      return t("monitorAtHome", locale);
+    case "need_one_more_answer":
+      return t("needOneMore", locale);
+  }
+}
+
+export function decisionStatus(kind: DecisionKind, locale: Locale): string {
+  switch (kind) {
+    case "go_now":
+      return t("goNowStatus", locale);
+    case "get_care_today":
+      return t("getCareStatus", locale);
+    case "monitor_at_home":
+      return t("monitorStatus", locale);
+    case "need_one_more_answer":
+      return t("needOneMoreStatus", locale);
   }
 }

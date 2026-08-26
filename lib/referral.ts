@@ -1,14 +1,22 @@
+import { fill, t, type CopyKey, type Locale } from "./copy";
 import { facilityById, pickFacility, redirectFacility } from "./facilities";
 import { createId, nowIso } from "./ids";
-import type { DecisionKind, Referral, ReferralStage, Role } from "./types";
+import type {
+  DecisionKind,
+  OutcomeCode,
+  Referral,
+  ReferralStage,
+  Role,
+} from "./types";
 
 export const REFERRAL_STAGES: ReferralStage[] = [
-  "prepared",
+  "created",
   "sent",
   "received",
   "accepted",
-  "traveling",
+  "patient_moving",
   "arrived",
+  "seen",
   "completed",
   "outcome_returned",
 ];
@@ -19,6 +27,7 @@ export type ReferralAction =
   | "accept"
   | "travel"
   | "arrive"
+  | "start_care"
   | "complete"
   | "return_outcome"
   | "redirect"
@@ -28,8 +37,9 @@ const STAGE_AFTER: Record<ReferralAction, ReferralStage | null> = {
   send: "sent",
   receive: "received",
   accept: "accepted",
-  travel: "traveling",
+  travel: "patient_moving",
   arrive: "arrived",
+  start_care: "seen",
   complete: "completed",
   return_outcome: "outcome_returned",
   redirect: "sent",
@@ -37,9 +47,10 @@ const STAGE_AFTER: Record<ReferralAction, ReferralStage | null> = {
 };
 
 export type ReferralView = {
+  stageLabel: string;
   headline: string;
   status: string;
-  actionLabel: string | null;
+  action: { id: ReferralAction; label: string } | null;
   arrivalMinutes: number | null;
 };
 
@@ -53,14 +64,14 @@ export function createReferral(input: {
   return {
     id: createId("ref"),
     encounterId: input.encounterId,
-    stage: "prepared",
+    stage: "created",
     facilityId: facility.id,
     expectedArrivalMinutes: facility.travelMinutes,
     queued: false,
     failure: null,
     askMore: null,
     outcome: null,
-    history: [{ stage: "prepared", at, by: input.by }],
+    history: [{ stage: "created", at, by: input.by }],
     createdAt: at,
     updatedAt: at,
   };
@@ -74,7 +85,7 @@ export function canPerform(
 
   switch (action) {
     case "send":
-      return stage === "prepared";
+      return stage === "created";
     case "receive":
       return stage === "sent";
     case "accept":
@@ -82,9 +93,11 @@ export function canPerform(
     case "travel":
       return stage === "accepted";
     case "arrive":
-      return stage === "traveling";
-    case "complete":
+      return stage === "patient_moving";
+    case "start_care":
       return stage === "arrived";
+    case "complete":
+      return stage === "seen";
     case "return_outcome":
       return stage === "completed";
     case "redirect":
@@ -104,7 +117,7 @@ export function applyReferralAction(
     offline: boolean;
     noFacilityResponse: boolean;
     weakConnection: boolean;
-    outcome?: string;
+    outcome?: OutcomeCode;
   },
 ): Referral {
   const at = nowIso();
@@ -152,12 +165,7 @@ export function applyReferralAction(
       askMore: null,
       history: [
         ...referral.history,
-        {
-          stage: "sent",
-          at,
-          by,
-          note: `Redirected to ${nextFacility.name}`,
-        },
+        { stage: "sent", at, by, note: nextFacility.name },
       ],
       updatedAt: at,
     };
@@ -167,16 +175,8 @@ export function applyReferralAction(
     return {
       ...referral,
       stage: "received",
-      askMore: "Can they walk into the facility?",
-      history: [
-        ...referral.history,
-        {
-          stage: "received",
-          at,
-          by,
-          note: "Facility asked for more information",
-        },
-      ],
+      askMore: "can_walk",
+      history: [...referral.history, { stage: "received", at, by }],
       updatedAt: at,
     };
   }
@@ -200,7 +200,7 @@ export function applyReferralAction(
     return {
       ...referral,
       stage: "outcome_returned",
-      outcome: options.outcome ?? "Seen and treated",
+      outcome: options.outcome ?? "treated",
       history: [...referral.history, { stage: "outcome_returned", at, by }],
       updatedAt: at,
     };
@@ -219,246 +219,264 @@ export function applyReferralAction(
   };
 }
 
+const STAGE_LABEL_KEY: Record<ReferralStage, CopyKey> = {
+  created: "stageCreated",
+  sent: "stageSent",
+  received: "stageReceived",
+  accepted: "stageAccepted",
+  patient_moving: "stagePatientMoving",
+  arrived: "stageArrived",
+  seen: "stageSeen",
+  completed: "stageCompleted",
+  outcome_returned: "stageOutcomeReturned",
+};
+
+export function stageLabel(stage: ReferralStage, locale: Locale): string {
+  return t(STAGE_LABEL_KEY[stage], locale);
+}
+
+export function outcomeLabel(outcome: OutcomeCode, locale: Locale): string {
+  switch (outcome) {
+    case "treated":
+      return t("outcomeTreated", locale);
+    case "referred_onward":
+      return t("outcomeHigher", locale);
+    case "did_not_arrive":
+      return t("outcomeNoShow", locale);
+    case "unknown":
+      return t("outcomeUnknown", locale);
+  }
+}
+
+/**
+ * The one place where referral state becomes words. Every surface renders the
+ * same event through this translation: (stage x role x language) -> what this
+ * person needs to know, and the one thing they can do about it.
+ */
 export function describeReferral(
   role: Role,
   referral: Referral,
   decisionKind: DecisionKind | null,
+  locale: Locale,
 ): ReferralView {
   const facility = facilityById(referral.facilityId);
   const urgent = decisionKind === "go_now";
   const minutes = referral.expectedArrivalMinutes;
+  const label = stageLabel(referral.stage, locale);
+  const f = facility.name;
+
+  const view = (
+    headlineKey: CopyKey,
+    statusKey: CopyKey,
+    action: { id: ReferralAction; label: CopyKey } | null,
+    arrivalMinutes: number | null,
+  ): ReferralView => ({
+    stageLabel: label,
+    headline: fill(t(headlineKey, locale), { f }),
+    status: fill(t(statusKey, locale), { f }),
+    action: action ? { id: action.id, label: t(action.label, locale) } : null,
+    arrivalMinutes,
+  });
 
   if (referral.queued || referral.failure === "offline") {
     if (role === "household") {
-      return {
-        headline: "Saved on this phone",
-        status: "You're offline. The referral will send when you're back.",
-        actionLabel: "Send to the facility",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refQueuedHouseholdHeadline",
+        "refQueuedHouseholdStatus",
+        { id: "send", label: "actionSendFacility" },
+        null,
+      );
     }
     if (role === "chp") {
-      return {
-        headline: "Referral queued — offline",
-        status: "It is on this device. Send when the connection returns.",
-        actionLabel: "Send referral",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refQueuedChpHeadline",
+        "refQueuedChpStatus",
+        { id: "send", label: "actionSendReferral" },
+        null,
+      );
     }
   }
 
   if (referral.failure === "no_facility_response" && referral.stage === "sent") {
     if (role === "facility") {
-      return {
-        headline: "New referral — not yet reviewed",
-        status: `${facility.name} has not responded.`,
-        actionLabel: "Accept",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refSentFacilityHeadline",
+        "refNoResponseFacilityStatus",
+        { id: "accept", label: "actionAccept" },
+        null,
+      );
     }
     if (role === "household") {
-      return {
-        headline: "No facility response",
-        status: "Stay where you can travel when they answer.",
-        actionLabel: null,
-        arrivalMinutes: null,
-      };
+      return view("refNoResponseHeadline", "refNoResponseHouseholdStatus", null, null);
     }
-    return {
-      headline: "No facility response",
-      status: "Referral sent — the facility has not answered.",
-      actionLabel: null,
-      arrivalMinutes: null,
-    };
+    return view("refNoResponseHeadline", "refNoResponseOtherStatus", null, null);
   }
 
   switch (referral.stage) {
-    case "prepared":
+    case "created":
       if (role === "household") {
-        return {
-          headline: "A facility is being prepared",
-          status: "Nothing has been sent yet.",
-          actionLabel: urgent ? "Send now" : "Send to the facility",
-          arrivalMinutes: null,
-        };
+        return view(
+          "refCreatedHouseholdHeadline",
+          "refCreatedHouseholdStatus",
+          { id: "send", label: urgent ? "actionSendNow" : "actionSendFacility" },
+          null,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Referral prepared — not sent yet",
-          status: `Ready for ${facility.name}.`,
-          actionLabel: "Send referral",
-          arrivalMinutes: null,
-        };
+        return view(
+          "refCreatedChpHeadline",
+          "refCreatedChpStatus",
+          { id: "send", label: "actionSendReferral" },
+          null,
+        );
       }
-      return {
-        headline: "A community referral is being prepared",
-        status: "It has not reached this facility yet.",
-        actionLabel: null,
-        arrivalMinutes: null,
-      };
+      return view("refCreatedFacilityHeadline", "refCreatedFacilityStatus", null, null);
     case "sent":
       if (role === "household") {
-        return {
-          headline: "Your referral is on the way",
-          status: `${facility.name} has not answered yet.`,
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view("refSentHouseholdHeadline", "refSentHouseholdStatus", null, null);
       }
       if (role === "chp") {
-        return {
-          headline: "Referral sent — waiting for the facility",
-          status: `${facility.name} has not accepted yet.`,
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view("refSentChpHeadline", "refSentChpStatus", null, null);
       }
-      return {
-        headline: "New referral — not yet reviewed",
-        status: "Decide whether this facility can take them.",
-        actionLabel: "Accept",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refSentFacilityHeadline",
+        "refSentFacilityStatus",
+        { id: "accept", label: "actionAccept" },
+        null,
+      );
     case "received":
       if (role === "household") {
-        return {
-          headline: "The facility has seen your referral",
-          status: "They have not accepted yet. Stay ready.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view(
+          "refReceivedHouseholdHeadline",
+          "refReceivedHouseholdStatus",
+          null,
+          null,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Facility received referral — not yet accepted",
-          status: `${facility.name} is deciding now.`,
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view("refReceivedChpHeadline", "refReceivedChpStatus", null, null);
       }
-      return {
-        headline: "Referral received — decide now",
-        status: "Accept, redirect, or ask for one missing fact.",
-        actionLabel: "Accept",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refReceivedFacilityHeadline",
+        "refReceivedFacilityStatus",
+        { id: "accept", label: "actionAccept" },
+        null,
+      );
     case "accepted":
       if (role === "household") {
-        return {
-          headline: "Facility accepted — you can leave now",
-          status: `Go to ${facility.name}.`,
-          actionLabel: "We've left",
-          arrivalMinutes: minutes,
-        };
+        return view(
+          "refAcceptedHouseholdHeadline",
+          "refAcceptedHouseholdStatus",
+          { id: "travel", label: "actionWeveLeft" },
+          minutes,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Referral accepted — patient travel not yet confirmed",
-          status: `${facility.name} is waiting for them to leave.`,
-          actionLabel: "They have left",
-          arrivalMinutes: minutes,
-        };
+        return view(
+          "refAcceptedChpHeadline",
+          "refAcceptedChpStatus",
+          { id: "travel", label: "actionTheyLeft" },
+          minutes,
+        );
       }
-      return {
-        headline: urgent
-          ? "Incoming urgent referral"
-          : "Incoming referral",
-        status: "Prepare to receive them.",
-        actionLabel: null,
-        arrivalMinutes: minutes,
-      };
-    case "traveling":
+      return view(
+        urgent ? "refAcceptedFacilityUrgentHeadline" : "refAcceptedFacilityHeadline",
+        "refAcceptedFacilityStatus",
+        null,
+        minutes,
+      );
+    case "patient_moving":
       if (role === "household") {
-        return {
-          headline: "You're on the way. They know you're coming.",
-          status: `Tell them you are the Tunza referral at ${facility.name}.`,
-          actionLabel: "We've arrived",
-          arrivalMinutes: minutes,
-        };
+        return view(
+          "refMovingHouseholdHeadline",
+          "refMovingHouseholdStatus",
+          { id: "arrive", label: "actionWeveArrived" },
+          minutes,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Patient traveling — arrival not yet confirmed",
-          status: `${facility.name} is expecting them.`,
-          actionLabel: null,
-          arrivalMinutes: minutes,
-        };
+        return view("refMovingChpHeadline", "refMovingChpStatus", null, minutes);
       }
-      return {
-        headline: "Patient en route — prepare to receive",
-        status: "Keep the receiving place ready.",
-        actionLabel: "They're here",
-        arrivalMinutes: minutes,
-      };
+      return view(
+        "refMovingFacilityHeadline",
+        "refMovingFacilityStatus",
+        { id: "arrive", label: "actionTheyreHere" },
+        minutes,
+      );
     case "arrived":
       if (role === "household") {
-        return {
-          headline: "You've arrived. Tell them you're the Tunza referral.",
-          status: "Stay until they have seen you.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view(
+          "refArrivedHouseholdHeadline",
+          "refArrivedHouseholdStatus",
+          null,
+          null,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Patient arrived — outcome not yet returned",
-          status: "The visit has not been closed.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view("refArrivedChpHeadline", "refArrivedChpStatus", null, null);
       }
-      return {
-        headline: "Patient here — start care",
-        status: "The person has arrived.",
-        actionLabel: "Complete visit",
-        arrivalMinutes: null,
-      };
+      return view(
+        "refArrivedFacilityHeadline",
+        "refArrivedFacilityStatus",
+        { id: "start_care", label: "actionStartCare" },
+        null,
+      );
+    case "seen":
+      if (role === "household") {
+        return view("refSeenHouseholdHeadline", "refSeenHouseholdStatus", null, null);
+      }
+      if (role === "chp") {
+        return view("refSeenChpHeadline", "refSeenChpStatus", null, null);
+      }
+      return view(
+        "refSeenFacilityHeadline",
+        "refSeenFacilityStatus",
+        { id: "complete", label: "actionCompleteVisit" },
+        null,
+      );
     case "completed":
       if (role === "household") {
-        return {
-          headline: "Care is finished. Waiting to hear what happened.",
-          status: "The outcome has not come back yet.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view(
+          "refCompletedHouseholdHeadline",
+          "refCompletedHouseholdStatus",
+          null,
+          null,
+        );
       }
       if (role === "chp") {
-        return {
-          headline: "Visit completed — waiting for outcome",
-          status: "Follow-up depends on what the facility returns.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        return view("refCompletedChpHeadline", "refCompletedChpStatus", null, null);
       }
-      return {
-        headline: "Visit complete — return the outcome",
-        status: "The community needs to know what happened.",
-        actionLabel: "Return what happened",
-        arrivalMinutes: null,
-      };
-    case "outcome_returned":
+      return view(
+        "refCompletedFacilityHeadline",
+        "refCompletedFacilityStatus",
+        { id: "return_outcome", label: "actionReturnOutcome" },
+        null,
+      );
+    case "outcome_returned": {
+      const outcomeText = referral.outcome
+        ? outcomeLabel(referral.outcome, locale)
+        : null;
       if (role === "household") {
-        return {
-          headline: "Here's what happened, and what to do next",
-          status: referral.outcome ?? "The facility returned an outcome.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        const base = view(
+          "refOutcomeHouseholdHeadline",
+          "refOutcomeHouseholdStatus",
+          null,
+          null,
+        );
+        return { ...base, status: outcomeText ?? base.status };
       }
       if (role === "chp") {
-        return {
-          headline: "Outcome returned — follow-up may be needed",
-          status: referral.outcome ?? "Review whether this household needs a visit.",
-          actionLabel: null,
-          arrivalMinutes: null,
-        };
+        const base = view("refOutcomeChpHeadline", "refOutcomeChpStatus", null, null);
+        return { ...base, status: outcomeText ?? base.status };
       }
-      return {
-        headline: "Outcome sent to the community",
-        status: referral.outcome ?? "Returned.",
-        actionLabel: null,
-        arrivalMinutes: null,
-      };
+      const base = view(
+        "refOutcomeFacilityHeadline",
+        "refOutcomeFacilityStatus",
+        null,
+        null,
+      );
+      return { ...base, status: outcomeText ?? base.status };
+    }
   }
 }
 
@@ -466,6 +484,7 @@ export function followUpItems(
   role: Role,
   referral: Referral | null,
   decisionKind: DecisionKind | null,
+  locale: Locale,
 ): { id: string; label: string; detail?: string }[] {
   if (role !== "chp") {
     return [];
@@ -474,8 +493,8 @@ export function followUpItems(
     return [
       {
         id: "watch-home",
-        label: "Demo household — watch for danger signs",
-        detail: "They were advised to stay home. Check they still can drink and wake.",
+        label: t("fuWatchHome", locale),
+        detail: t("fuWatchHomeDetail", locale),
       },
     ];
   }
@@ -483,8 +502,8 @@ export function followUpItems(
     return [
       {
         id: "confirm-travel",
-        label: "Travel not yet confirmed",
-        detail: "Facility accepted. Confirm whether the household has left.",
+        label: t("fuConfirmTravel", locale),
+        detail: t("fuConfirmTravelDetail", locale),
       },
     ];
   }
@@ -492,8 +511,10 @@ export function followUpItems(
     return [
       {
         id: "post-outcome",
-        label: "Demo household — follow up after care",
-        detail: referral.outcome ?? "Confirm they are improving at home.",
+        label: t("fuPostOutcome", locale),
+        detail: referral.outcome
+          ? outcomeLabel(referral.outcome, locale)
+          : t("fuPostOutcomeDetail", locale),
       },
     ];
   }

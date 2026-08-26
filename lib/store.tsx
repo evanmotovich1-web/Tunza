@@ -16,17 +16,20 @@ import {
   nextQuestion,
 } from "./assessment";
 import { applyReferralAction, createReferral } from "./referral";
+import { DEFAULT_LOCALE, type Locale } from "./copy";
 import { createId, nowIso } from "./ids";
 import type {
   CareState,
   Encounter,
+  HouseholdView,
   NamedFailure,
+  OutcomeCode,
   QuestionId,
   Referral,
   Role,
 } from "./types";
 
-const STORAGE_KEY = "tunza.v1.care";
+const STORAGE_KEY = "tunza.v2.care";
 
 export const INJECTABLE_FAILURES: NamedFailure[] = [
   "offline",
@@ -40,6 +43,8 @@ export const INJECTABLE_FAILURES: NamedFailure[] = [
 type Action =
   | { type: "hydrate"; state: CareState }
   | { type: "setRole"; role: Role }
+  | { type: "setLocale"; locale: Locale }
+  | { type: "setView"; view: HouseholdView }
   | { type: "setOnline"; online: boolean }
   | { type: "toggleFailure"; failure: NamedFailure }
   | { type: "startEncounter"; by: Role }
@@ -47,7 +52,7 @@ type Action =
   | { type: "setPresentation"; text: string }
   | { type: "setPhoto"; attached: boolean }
   | { type: "prepareReferral" }
-  | { type: "referralAction"; action: ReferralActionName; outcome?: string }
+  | { type: "referralAction"; action: ReferralActionName; outcome?: OutcomeCode }
   | { type: "goBack" }
   | { type: "continueForOneMore" }
   | { type: "reset" };
@@ -58,6 +63,7 @@ type ReferralActionName =
   | "accept"
   | "travel"
   | "arrive"
+  | "start_care"
   | "complete"
   | "return_outcome"
   | "redirect"
@@ -79,6 +85,8 @@ function newEncounter(by: Role): Encounter {
 
 export const initialCareState: CareState = {
   role: "household",
+  locale: DEFAULT_LOCALE,
+  view: "home",
   injectedFailures: [],
   encounter: newEncounter("household"),
   referral: null,
@@ -95,6 +103,10 @@ function reducer(state: CareState, action: Action): CareState {
       return { ...action.state, online: state.online };
     case "setRole":
       return { ...state, role: action.role };
+    case "setLocale":
+      return { ...state, locale: action.locale };
+    case "setView":
+      return { ...state, view: action.view };
     case "setOnline":
       return { ...state, online: action.online };
     case "toggleFailure": {
@@ -262,6 +274,7 @@ function reducer(state: CareState, action: Action): CareState {
       return {
         ...initialCareState,
         role: state.role,
+        locale: state.locale,
         online: state.online,
         injectedFailures: [],
         encounter: newEncounter(state.role === "facility" ? "household" : state.role),
@@ -277,6 +290,8 @@ type CareContextValue = {
   offline: boolean;
   dispatch: {
     setRole: (role: Role) => void;
+    setLocale: (locale: Locale) => void;
+    setView: (view: HouseholdView) => void;
     toggleFailure: (failure: NamedFailure) => void;
     startEncounter: () => void;
     answer: (question: QuestionId, value: string) => void;
@@ -289,8 +304,9 @@ type CareContextValue = {
     askMore: () => void;
     markTraveling: () => void;
     markArrived: () => void;
+    startCare: () => void;
     completeVisit: () => void;
-    returnOutcome: (outcome: string) => void;
+    returnOutcome: (outcome: OutcomeCode) => void;
     goBack: () => void;
     continueForOneMore: () => void;
     reset: () => void;
@@ -311,7 +327,12 @@ function readStoredState(): CareState {
     if (raw) {
       const parsed = JSON.parse(raw) as CareState;
       if (parsed?.role) {
-        return { ...parsed, online: navigator.onLine };
+        return {
+          ...parsed,
+          locale: parsed.locale ?? DEFAULT_LOCALE,
+          view: parsed.view ?? "home",
+          online: navigator.onLine,
+        };
       }
     }
   } catch {
@@ -326,6 +347,8 @@ function makeDispatch(
 ): CareContextValue["dispatch"] {
   return {
     setRole: (nextRole) => dispatch({ type: "setRole", role: nextRole }),
+    setLocale: (locale) => dispatch({ type: "setLocale", locale }),
+    setView: (view) => dispatch({ type: "setView", view }),
     toggleFailure: (failure) => dispatch({ type: "toggleFailure", failure }),
     startEncounter: () => dispatch({ type: "startEncounter", by: role }),
     answer: (question, value) => dispatch({ type: "answer", question, value }),
@@ -338,6 +361,7 @@ function makeDispatch(
     askMore: () => dispatch({ type: "referralAction", action: "ask_more" }),
     markTraveling: () => dispatch({ type: "referralAction", action: "travel" }),
     markArrived: () => dispatch({ type: "referralAction", action: "arrive" }),
+    startCare: () => dispatch({ type: "referralAction", action: "start_care" }),
     completeVisit: () => dispatch({ type: "referralAction", action: "complete" }),
     returnOutcome: (outcome) =>
       dispatch({ type: "referralAction", action: "return_outcome", outcome }),

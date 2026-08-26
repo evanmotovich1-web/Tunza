@@ -3,8 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { AssessmentQuestion, type EntryMode } from "@/components/AssessmentQuestion";
 import { Warning } from "@/components/Warning";
-import { copy } from "@/lib/copy";
-import { FAILURE_COPY } from "@/lib/failures";
+import { t } from "@/lib/copy";
+import { warningCopy } from "@/lib/failures";
 import { questionContent, dontKnowValue } from "@/lib/questions";
 import { speechSupported, startSpeech } from "@/lib/speech";
 import { activeFailures, useCare } from "@/lib/store";
@@ -13,6 +13,7 @@ export function AssessmentFlow() {
   const { state, dispatch } = useCare();
   const encounter = state.encounter;
   const question = encounter?.currentQuestion;
+  const locale = state.locale;
   const [mode, setMode] = useState<EntryMode>("type");
   const [listening, setListening] = useState(false);
   const [speakMessage, setSpeakMessage] = useState<string | undefined>();
@@ -28,7 +29,7 @@ export function AssessmentFlow() {
     return null;
   }
 
-  const content = questionContent(question, encounter.answers.who);
+  const content = questionContent(question, encounter.answers.who, locale);
   const currentQuestion = question;
   const currentEncounter = encounter;
   const canGoBack = currentEncounter.asked.length > 0 || Boolean(currentEncounter.decision);
@@ -45,7 +46,7 @@ export function AssessmentFlow() {
 
   function onSpeak() {
     if (!speechSupported()) {
-      setSpeakMessage(copy.speakUnavailable);
+      setSpeakMessage(t("speakUnavailable", locale));
       setMode("type");
       return;
     }
@@ -64,45 +65,53 @@ export function AssessmentFlow() {
         dispatch.setPresentation(next);
       },
       () => setListening(false),
+      locale,
     );
     speechRef.current = handle;
     if (!handle) {
       setListening(false);
-      setSpeakMessage(copy.speakUnavailable);
+      setSpeakMessage(t("speakUnavailable", locale));
     }
   }
 
   return (
     <div className="flex flex-col gap-4">
-      {failures.map((named) => (
-        <Warning
-          key={named}
-          named={named}
-          title={FAILURE_COPY[named].title}
-          body={FAILURE_COPY[named].body}
-        />
-      ))}
+      {failures.map((named) => {
+        const copy = warningCopy(named, locale);
+        return (
+          <Warning
+            key={named}
+            named={named}
+            eyebrow={copy.eyebrow}
+            title={copy.title}
+            body={copy.body}
+          />
+        );
+      })}
       {canGoBack ? (
         <button
           type="button"
           onClick={dispatch.goBack}
-          className="self-start text-sm font-medium text-ink-soft"
+          className="self-start text-label font-medium text-ink-soft"
         >
-          {copy.back}
+          {t("back", locale)}
         </button>
       ) : null}
 
       <AssessmentQuestion
+        locale={locale}
         question={content.question}
         hint={content.hint}
         choices={content.choices}
-        dontKnowLabel={currentQuestion === "who" ? copy.whoUnknown : copy.dontKnow}
+        dontKnowLabel={
+          currentQuestion === "who" ? t("whoUnknown", locale) : t("dontKnow", locale)
+        }
         onDontKnow={onDontKnow}
         onChoose={(id) => dispatch.answer(currentQuestion, id)}
         action={
           currentQuestion === "what"
             ? {
-                label: copy.whatContinue,
+                label: t("whatContinue", locale),
                 disabled:
                   currentEncounter.answers.presentation.trim().length === 0 &&
                   !currentEncounter.answers.photoAttached,

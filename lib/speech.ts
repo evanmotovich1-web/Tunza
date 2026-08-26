@@ -27,7 +27,11 @@ export function speechSupported(): boolean {
   return Boolean(speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition);
 }
 
-export function startSpeech(onText: (text: string) => void, onStop: () => void): SpeechHandle | null {
+export function startSpeech(
+  onText: (text: string) => void,
+  onStop: () => void,
+  locale: "en" | "sw" = "en",
+): SpeechHandle | null {
   if (typeof window === "undefined") {
     return null;
   }
@@ -37,7 +41,7 @@ export function startSpeech(onText: (text: string) => void, onStop: () => void):
     return null;
   }
   const recognition = new Ctor() as RecognitionLike;
-  recognition.lang = "en-KE";
+  recognition.lang = locale === "sw" ? "sw-KE" : "en-KE";
   recognition.interimResults = false;
   recognition.continuous = false;
   recognition.onresult = (event) => {
