@@ -1,0 +1,48 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-inter), Roboto, system-ui, sans-serif;
+  --color-ink: #1c1916;
+  --color-ink-soft: #5c564c;
+  --color-paper: #f4efe6;
+  --color-raised: #fffcf7;
+  --color-line: #e2d8c8;
+  --color-action: #0d5c4d;
+  --color-action-ink: #ffffff;
+  --color-urgent: #8f2418;
+  --color-urgent-soft: #f8e4df;
+  --color-today: #8a4b12;
+  --color-today-soft: #f6e6d0;
+  --color-watch: #1d4a73;
+  --color-watch-soft: #e3eef7;
+  --color-warn: #7a4e0b;
+  --color-warn-soft: #f7edd6;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  font-family: var(--font-inter), Roboto, system-ui, sans-serif;
+  font-weight: 400;
+  background: #e8e0d2;
+  color: var(--color-ink);
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
