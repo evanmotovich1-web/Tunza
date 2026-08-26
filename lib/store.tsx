@@ -1,0 +1,452 @@
+"use client";
+
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
+import {
+  applyAnswer,
+  decide,
+  EMPTY_ANSWERS,
+  nextQuestion,
+} from "./assessment";
+import { applyReferralAction, createReferral } from "./referral";
+import { createId, nowIso } from "./ids";
+import type {
+  CareState,
+  Encounter,
+  NamedFailure,
+  QuestionId,
+  Referral,
+  Role,
+} from "./types";
+
+const STORAGE_KEY = "tunza.v1.care";
+
+export const INJECTABLE_FAILURES: NamedFailure[] = [
+  "offline",
+  "no_facility_response",
+  "redirected",
+  "stale_information",
+  "incomplete_assessment",
+  "weak_connection",
+];
+
+type Action =
+  | { type: "hydrate"; state: CareState }
+  | { type: "setRole"; role: Role }
+  | { type: "setOnline"; online: boolean }
+  | { type: "toggleFailure"; failure: NamedFailure }
+  | { type: "startEncounter"; by: Role }
+  | { type: "answer"; question: QuestionId; value: string }
+  | { type: "setPresentation"; text: string }
+  | { type: "setPhoto"; attached: boolean }
+  | { type: "prepareReferral" }
+  | { type: "referralAction"; action: ReferralActionName; outcome?: string }
+  | { type: "goBack" }
+  | { type: "continueForOneMore" }
+  | { type: "reset" };
+
+type ReferralActionName =
+  | "send"
+  | "receive"
+  | "accept"
+  | "travel"
+  | "arrive"
+  | "complete"
+  | "return_outcome"
+  | "redirect"
+  | "ask_more";
+
+function newEncounter(by: Role): Encounter {
+  const at = nowIso();
+  return {
+    id: createId("enc"),
+    answers: { ...EMPTY_ANSWERS },
+    asked: [],
+    currentQuestion: "who",
+    decision: null,
+    startedBy: by,
+    createdAt: at,
+    updatedAt: at,
+  };
+}
+
+export const initialCareState: CareState = {
+  role: "household",
+  injectedFailures: [],
+  encounter: newEncounter("household"),
+  referral: null,
+  online: true,
+};
+
+function isOffline(state: CareState): boolean {
+  return !state.online || state.injectedFailures.includes("offline");
+}
+
+function reducer(state: CareState, action: Action): CareState {
+  switch (action.type) {
+    case "hydrate":
+      return { ...action.state, online: state.online };
+    case "setRole":
+      return { ...state, role: action.role };
+    case "setOnline":
+      return { ...state, online: action.online };
+    case "toggleFailure": {
+      const has = state.injectedFailures.includes(action.failure);
+      const injectedFailures = has
+        ? state.injectedFailures.filter((item) => item !== action.failure)
+        : [...state.injectedFailures, action.failure];
+      let referral = state.referral;
+      if (action.failure === "no_facility_response" && !has && referral?.stage === "sent") {
+        referral = { ...referral, failure: "no_facility_response" };
+      }
+      if (action.failure === "no_facility_response" && has && referral?.failure === "no_facility_response") {
+        referral = { ...referral, failure: null };
+      }
+      if (action.failure === "redirected" && !has && referral) {
+        referral = applyReferralAction(referral, "redirect", state.role, {
+          offline: isOffline(state),
+          noFacilityResponse: false,
+          weakConnection: false,
+        });
+      }
+      return { ...state, injectedFailures, referral };
+    }
+    case "startEncounter":
+      return {
+        ...state,
+        encounter: newEncounter(action.by),
+        referral: null,
+      };
+    case "setPresentation": {
+      if (!state.encounter) {
+        return state;
+      }
+      return {
+        ...state,
+        encounter: {
+          ...state.encounter,
+          answers: { ...state.encounter.answers, presentation: action.text },
+          updatedAt: nowIso(),
+        },
+      };
+    }
+    case "setPhoto": {
+      if (!state.encounter) {
+        return state;
+      }
+      return {
+        ...state,
+        encounter: {
+          ...state.encounter,
+          answers: { ...state.encounter.answers, photoAttached: action.attached },
+          updatedAt: nowIso(),
+        },
+      };
+    }
+    case "answer": {
+      if (!state.encounter || state.encounter.currentQuestion !== action.question) {
+        return state;
+      }
+      const answers = applyAnswer(
+        state.encounter.answers,
+        action.question,
+        action.value,
+      );
+      const asked = state.encounter.asked.includes(action.question)
+        ? state.encounter.asked
+        : [...state.encounter.asked, action.question];
+      const upcoming = nextQuestion(answers, action.question);
+      const decision = upcoming ? null : decide(answers);
+      return {
+        ...state,
+        encounter: {
+          ...state.encounter,
+          answers,
+          asked,
+          currentQuestion: upcoming,
+          decision,
+          updatedAt: nowIso(),
+        },
+      };
+    }
+    case "prepareReferral": {
+      if (!state.encounter?.decision) {
+        return state;
+      }
+      const kind = state.encounter.decision.kind;
+      if (kind !== "go_now" && kind !== "get_care_today") {
+        return state;
+      }
+      if (state.referral) {
+        return state;
+      }
+      const referral = createReferral({
+        encounterId: state.encounter.id,
+        urgent: kind === "go_now",
+        by: state.role,
+      });
+      return { ...state, referral };
+    }
+    case "referralAction": {
+      if (!state.referral) {
+        return state;
+      }
+      const referral = applyReferralAction(state.referral, action.action, state.role, {
+        offline: isOffline(state),
+        noFacilityResponse: state.injectedFailures.includes("no_facility_response"),
+        weakConnection: state.injectedFailures.includes("weak_connection"),
+        outcome: action.outcome,
+      });
+      return { ...state, referral };
+    }
+    case "continueForOneMore": {
+      if (!state.encounter?.decision || state.referral) {
+        return state;
+      }
+      if (state.encounter.decision.kind !== "need_one_more_answer") {
+        return state;
+      }
+      if (state.encounter.asked.includes("main_problem")) {
+        return state;
+      }
+      return {
+        ...state,
+        encounter: {
+          ...state.encounter,
+          currentQuestion: "main_problem",
+          decision: null,
+          updatedAt: nowIso(),
+        },
+      };
+    }
+    case "goBack": {
+      if (!state.encounter || state.referral) {
+        return state;
+      }
+      if (state.encounter.decision && state.encounter.asked.length > 0) {
+        const last = state.encounter.asked[state.encounter.asked.length - 1];
+        return {
+          ...state,
+          encounter: {
+            ...state.encounter,
+            currentQuestion: last,
+            decision: null,
+            updatedAt: nowIso(),
+          },
+        };
+      }
+      if (state.encounter.asked.length === 0) {
+        return state;
+      }
+      const asked = state.encounter.asked.slice(0, -1);
+      const currentQuestion = state.encounter.asked[state.encounter.asked.length - 1];
+      return {
+        ...state,
+        encounter: {
+          ...state.encounter,
+          asked,
+          currentQuestion,
+          decision: null,
+          updatedAt: nowIso(),
+        },
+      };
+    }
+    case "reset":
+      return {
+        ...initialCareState,
+        role: state.role,
+        online: state.online,
+        injectedFailures: [],
+        encounter: newEncounter(state.role === "facility" ? "household" : state.role),
+      };
+    default:
+      return state;
+  }
+}
+
+type CareContextValue = {
+  state: CareState;
+  hydrated: boolean;
+  offline: boolean;
+  dispatch: {
+    setRole: (role: Role) => void;
+    toggleFailure: (failure: NamedFailure) => void;
+    startEncounter: () => void;
+    answer: (question: QuestionId, value: string) => void;
+    setPresentation: (text: string) => void;
+    setPhoto: (attached: boolean) => void;
+    prepareReferral: () => void;
+    sendReferral: () => void;
+    acceptReferral: () => void;
+    redirectReferral: () => void;
+    askMore: () => void;
+    markTraveling: () => void;
+    markArrived: () => void;
+    completeVisit: () => void;
+    returnOutcome: (outcome: string) => void;
+    goBack: () => void;
+    continueForOneMore: () => void;
+    reset: () => void;
+  };
+};
+
+function emptySubscribe() {
+  return () => {};
+}
+
+function useIsClient() {
+  return useSyncExternalStore(emptySubscribe, () => true, () => false);
+}
+
+function readStoredState(): CareState {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw) as CareState;
+      if (parsed?.role) {
+        return { ...parsed, online: navigator.onLine };
+      }
+    }
+  } catch {
+    // Demo persistence must never break the care path.
+  }
+  return { ...initialCareState, online: navigator.onLine };
+}
+
+function makeDispatch(
+  dispatch: (action: Action) => void,
+  role: Role,
+): CareContextValue["dispatch"] {
+  return {
+    setRole: (nextRole) => dispatch({ type: "setRole", role: nextRole }),
+    toggleFailure: (failure) => dispatch({ type: "toggleFailure", failure }),
+    startEncounter: () => dispatch({ type: "startEncounter", by: role }),
+    answer: (question, value) => dispatch({ type: "answer", question, value }),
+    setPresentation: (text) => dispatch({ type: "setPresentation", text }),
+    setPhoto: (attached) => dispatch({ type: "setPhoto", attached }),
+    prepareReferral: () => dispatch({ type: "prepareReferral" }),
+    sendReferral: () => dispatch({ type: "referralAction", action: "send" }),
+    acceptReferral: () => dispatch({ type: "referralAction", action: "accept" }),
+    redirectReferral: () => dispatch({ type: "referralAction", action: "redirect" }),
+    askMore: () => dispatch({ type: "referralAction", action: "ask_more" }),
+    markTraveling: () => dispatch({ type: "referralAction", action: "travel" }),
+    markArrived: () => dispatch({ type: "referralAction", action: "arrive" }),
+    completeVisit: () => dispatch({ type: "referralAction", action: "complete" }),
+    returnOutcome: (outcome) =>
+      dispatch({ type: "referralAction", action: "return_outcome", outcome }),
+    goBack: () => dispatch({ type: "goBack" }),
+    continueForOneMore: () => dispatch({ type: "continueForOneMore" }),
+    reset: () => dispatch({ type: "reset" }),
+  };
+}
+
+const noopDispatch: CareContextValue["dispatch"] = makeDispatch(() => {
+  // Server snapshot has no live session yet.
+}, "household");
+
+const CareContext = createContext<CareContextValue | null>(null);
+
+export function CareProvider({ children }: { children: ReactNode }) {
+  const isClient = useIsClient();
+  if (!isClient) {
+    return (
+      <CareContext.Provider
+        value={{
+          state: initialCareState,
+          hydrated: false,
+          offline: false,
+          dispatch: noopDispatch,
+        }}
+      >
+        {children}
+      </CareContext.Provider>
+    );
+  }
+  return <CareProviderClient>{children}</CareProviderClient>;
+}
+
+function CareProviderClient({ children }: { children: ReactNode }) {
+  const [state, dispatch] = useReducer(reducer, null, readStoredState);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      // Ignore quota errors; the in-memory path still works.
+    }
+  }, [state]);
+
+  useEffect(() => {
+    function onOnline() {
+      dispatch({ type: "setOnline", online: true });
+    }
+    function onOffline() {
+      dispatch({ type: "setOnline", online: false });
+    }
+    window.addEventListener("online", onOnline);
+    window.addEventListener("offline", onOffline);
+    return () => {
+      window.removeEventListener("online", onOnline);
+      window.removeEventListener("offline", onOffline);
+    };
+  }, []);
+
+  const value = useMemo<CareContextValue>(
+    () => ({
+      state,
+      hydrated: true,
+      offline: isOffline(state),
+      dispatch: makeDispatch(dispatch, state.role),
+    }),
+    [state],
+  );
+
+  return <CareContext.Provider value={value}>{children}</CareContext.Provider>;
+}
+
+export function useCare(): CareContextValue {
+  const ctx = useContext(CareContext);
+  if (!ctx) {
+    throw new Error("useCare must be used inside CareProvider");
+  }
+  return ctx;
+}
+
+export function activeFailures(
+  state: CareState,
+  referral: Referral | null,
+): NamedFailure[] {
+  const named = new Set<NamedFailure>();
+  if (!state.online || state.injectedFailures.includes("offline")) {
+    named.add("offline");
+  }
+  if (state.injectedFailures.includes("weak_connection")) {
+    named.add("weak_connection");
+  }
+  if (state.injectedFailures.includes("stale_information")) {
+    named.add("stale_information");
+  }
+  if (referral?.failure === "no_facility_response") {
+    named.add("no_facility_response");
+  }
+  if (referral?.failure === "redirected") {
+    named.add("redirected");
+  }
+  if (
+    state.encounter?.decision?.kind === "need_one_more_answer" ||
+    state.injectedFailures.includes("incomplete_assessment")
+  ) {
+    named.add("incomplete_assessment");
+  }
+  return [...named];
+}
+
+export { reducer as careReducer };
+export type { Action as CareAction };
