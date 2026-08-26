@@ -683,3 +683,25 @@ The software should help make that decision carefully.
 And when reality tells us the decision was wrong, the system should learn exactly why.
 
 That is the work.
+
+⸻
+
+Running the v1 foundation
+
+The thesis above is the product intent. This repository also contains a v1 care-path foundation: one Next.js App Router app with household, CHP, and facility surfaces on the same referral object.
+
+```bash
+npm install
+npm run dev
+```
+
+Quality gates:
+
+```bash
+npx tsc --noEmit
+npm test
+npm run lint
+npm run build
+```
+
+Open the app, walk the household path, then use Demo in the header to view the same referral as CHP or facility. Demo names and facilities are fake. Do not commit credentials or patient data.
