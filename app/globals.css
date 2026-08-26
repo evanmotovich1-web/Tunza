@@ -3,16 +3,18 @@
 @theme {
   --font-sans: var(--font-inter), Roboto, system-ui, sans-serif;
 
-  /* Color. Urgency is the only loud thing in the system. */
+  /* Color. Two reds, one discipline: the dark matte brand red is the action
+     role; the brighter, more saturated red belongs to emergencies alone.
+     tests/contrast.test.ts enforces both the WCAG pairs and the split. */
   --color-ink: #1c1916;
   --color-ink-soft: #5c564c;
   --color-ground: #e8e0d2;
   --color-paper: #f4efe6;
   --color-raised: #fffcf7;
   --color-line: #e2d8c8;
-  --color-action: #0d5c4d;
+  --color-action: #7c1f18;
   --color-action-ink: #ffffff;
-  --color-urgent: #8f2418;
+  --color-urgent: #b3261e;
   --color-urgent-soft: #f8e4df;
   --color-today: #8a4b12;
   --color-today-soft: #f6e6d0;

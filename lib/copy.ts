@@ -242,8 +242,8 @@ const en = {
   failWeakBody:
     "This may take longer. The care path stays on this phone until the send is confirmed.",
   dangerEyebrow: "Danger sign",
-  dangerTitle: "Danger sign",
-  dangerBody: "Do not wait at home with this sign.",
+  dangerTitle: "Do not wait at home with this sign.",
+  dangerBody: "Go to care now.",
   watchEyebrow: "Watch",
   watchTitle: "Go now if this starts",
 
@@ -546,8 +546,8 @@ const sw: Record<CopyKey, string> = {
   failWeakBody:
     "Hii inaweza kuchukua muda zaidi. Njia ya huduma inabaki kwenye simu hii hadi utumaji uthibitishwe.",
   dangerEyebrow: "Dalili ya hatari",
-  dangerTitle: "Dalili ya hatari",
-  dangerBody: "Usisubiri nyumbani na dalili hii.",
+  dangerTitle: "Usisubiri nyumbani na dalili hii.",
+  dangerBody: "Nenda kupata huduma sasa.",
   watchEyebrow: "Angalia",
   watchTitle: "Nenda sasa dalili hizi zikianza",
 

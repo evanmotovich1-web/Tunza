@@ -32,7 +32,7 @@ export function FacilityCard({
         {after}
       </p>
       <p
-        className={`mt-2 text-body font-semibold ${canHandle ? "text-action" : "text-urgent"}`}
+        className={`mt-2 text-body font-semibold ${canHandle ? "text-ink" : "text-urgent"}`}
       >
         {statusLabel}
       </p>

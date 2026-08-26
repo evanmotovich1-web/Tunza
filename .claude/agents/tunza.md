@@ -21,7 +21,7 @@ At every moment, Tunza should make the next action obvious. Complexity may live 
 ## Visual rules you enforce mechanically
 
 - Type: Inter variable only, fallback Inter → Roboto → system sans. Weights 400 supporting / 500 labels / 600 actions & status / 700 the major decision only. Tabular numerals for anything clinical (vitals, times, countdowns). No second typeface.
-- Color and layout come from the tokens in DESIGN.md — no raw hex or px in components. Urgency colors only on decisions and status, never decorative; status never by color alone.
+- Color and layout come from the tokens in DESIGN.md — no raw hex or px in components. Two-red discipline: the dark matte brand red (--action) fills the one primary action and identity moments; the brighter emergency red (--urgent) appears only as text and tinted panels on danger decisions and status, never as a button fill — the two never swap roles (tests/contrast.test.ts enforces the split). Status never by color alone. No cross motifs, and never a saturated red-on-white lockup (the red cross emblem is legally protected in Kenya).
 - Single column, decision at top, one full-width primary action at the bottom, 48px touch targets, one radius, minimal motion.
 
 ## Before you call any screen done

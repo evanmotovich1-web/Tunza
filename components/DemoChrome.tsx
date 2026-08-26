@@ -23,7 +23,7 @@ export function DemoChrome() {
   return (
     <header className="sticky top-0 z-10 border-b border-line/80 bg-paper/95 px-5 py-3 backdrop-blur">
       <div className="flex items-center justify-between gap-3">
-        <p className="text-heading font-semibold tracking-tight text-ink">Tunza</p>
+        <p className="text-heading font-semibold tracking-tight text-action">Tunza</p>
         <div className="flex items-center gap-3">
           <p className="text-label font-medium text-ink-soft">
             {t("viewingAs", locale)}{" "}

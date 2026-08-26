@@ -212,14 +212,28 @@ No second decorative typeface in the app. If Tunza wants a more ownable brand fe
 
 Color
 
-Urgency is the only loud thing in the system. The implemented palette is warm paper rather than clinical white — the app should feel like a considered object, not a hospital form.
+Tunza's finish is matte red on warm paper.
 
-  --urgent       #8f2418   Go now. Emergency states.        (soft: #f8e4df)
-  --today        #8a4b12   Get care today. Time-boxed.      (soft: #f6e6d0)
-  --watch        #1d4a73   Monitor at home. Watch states.   (soft: #e3eef7)
-  --warn         #7a4e0b   Degraded states: offline, weak,  (soft: #f7edd6)
+Not alarm red. A dark, low-lightness oxblood — the "matte" in a flat interface comes from darkness, not gloss or texture — sitting on cream, the way institutions that live on a dark red do (Stanford's whole identity runs on Cardinal #8C1515). The app should feel like a considered object, not a hospital form.
+
+Because this is a health product, the red is carried under a strict two-red discipline, the documented pattern for red brands that also raise alarms (Stanford splits Cardinal from its brighter Digital red for interaction; USWDS separates brand theme tokens from reserved state tokens; clinical-alert guidance reserves red for the top severity tier only, so alarm fatigue never sets in):
+
+  the BRAND red is dark and matte, and it is the action role — filled surfaces only:
+  the one primary button, the wordmark, focus and selection;
+
+  the EMERGENCY red is distinctly brighter and more saturated, and appears only
+  as text and tinted panels on danger decisions and status — never as a filled
+  button, never as chrome;
+
+  the two never swap roles, and the split is enforced by test, not convention.
+
+  --action       #7c1f18   Tunza Red. The matte brand red; the one
+                           primary action, the wordmark, focus.
+  --urgent       #b3261e   Emergencies only. Go now, danger signs.  (soft: #f8e4df)
+  --today        #8a4b12   Get care today. Time-boxed.              (soft: #f6e6d0)
+  --watch        #1d4a73   Monitor at home. Watch states.           (soft: #e3eef7)
+  --warn         #7a4e0b   Degraded states: offline, weak,          (soft: #f7edd6)
                            stale, incomplete.
-  --action       #0d5c4d   The one primary action on a screen.
   --ink          #1c1916   primary text
   --ink-soft     #5c564c   supporting text
   --line         #e2d8c8   borders, dividers
@@ -227,13 +241,22 @@ Urgency is the only loud thing in the system. The implemented palette is warm pa
   --paper        #f4efe6   the app surface
   --raised       #fffcf7   cards, inputs
 
-One deliberate departure from the obvious: the monitor-at-home verdict is calm blue, not green. Green is reserved for the action color, so "stay home" never reads as "all clear, stop paying attention" — it reads as "keep watching."
+The monitor-at-home verdict stays calm blue, and doubly so now: red–green is the most impaired axis of human color vision, and with red carrying the brand there is no green in the product to be confused with. Amber for "today" and "degraded" follows the same severity ladder clinical alerting uses (red above orange above yellow).
+
+Two constraints specific to where Tunza lives:
+
+  the red cross emblem is criminally protected in Kenya (Act No. 29 of 1965 and
+  Geneva Conventions law) — no cross motifs anywhere, and the brand red never
+  appears as a saturated red-on-white lockup; it lives dark, on warm cream;
+
+  emergency meaning never rides on color alone — every urgent state carries its
+  words, in both languages, exactly as SC 1.4.1 requires.
 
 Rules:
 
-  urgency colors appear only on decisions and status — never as decoration, never in illustration, never for emphasis;
-  one action color, used by exactly one element per screen;
-  text contrast at WCAG AA minimum, aimed at cheap screens in sunlight;
+  the emergency red appears only on danger decisions and status — never as decoration, never as a button fill;
+  one action color, used by exactly one element per screen — red stays scarce even as the brand;
+  every text pairing at WCAG AA minimum against cream (a stricter test than white), aimed at cheap screens in sunlight — verified in tests/contrast.test.ts, which also asserts the emergency red stays at least 1.5× brighter than the brand red;
   status is never communicated by color alone — always color plus words;
   no raw hex in components — every color goes through these tokens.
 
