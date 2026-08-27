@@ -5,11 +5,11 @@ priorities" for the system-level list; this is the working cut.
 
 ## Ports from the old app (`medical-triage`) — through the contract filter
 
-- **Voice transcription route** (`app/api/transcribe`, Whisper): replaces the
-  browser SpeechRecognition fallback with a real path; keep the designed
-  degrade when offline.
-- **Facility discovery** (Google Places + geohash): replaces `DEMO_FACILITIES`
-  behind the same FacilityCard; keep capability-aware selection, not nearest-first.
+- ~~Voice transcription route~~ DONE 2026-08-27 (`app/api/transcribe` +
+  `lib/voice.ts` unified degrade chain).
+- ~~Facility discovery~~ DONE 2026-08-27 (`app/api/facilities` + `lib/places.ts`
+  + `lib/geohash.ts`; Nearby view only — the referral machine keeps demo
+  facilities until real capability data exists).
 - **Case history**: the home Continue card generalizes into "your past cases";
   needs the privacy projections from the README (cases vs case_signals).
 - **Clinician verification + dashboard** (`app/doctor`): becomes the real
