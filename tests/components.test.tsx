@@ -57,6 +57,21 @@ describe("HomeScreen", () => {
   });
 });
 
+describe("RoleGate", () => {
+  it("offers both gated roles behind one sign-in screen", async () => {
+    const { CareProvider } = await import("../lib/store");
+    const { RoleGate } = await import("../components/RoleGate");
+    const { getByText } = render(
+      <CareProvider>
+        <RoleGate />
+      </CareProvider>,
+    );
+    expect(getByText(t("gateHeading", "en"))).toBeTruthy();
+    expect(getByText(t("gateChooseChp", "en"))).toBeTruthy();
+    expect(getByText(t("gateChooseFacility", "en"))).toBeTruthy();
+  });
+});
+
 describe("AssessmentQuestion", () => {
   it.each(LOCALES)("renders one question, choices, and I don't know (%s)", (locale) => {
     const { getByText, getByRole } = render(

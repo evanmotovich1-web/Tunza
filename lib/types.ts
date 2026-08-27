@@ -123,12 +123,19 @@ export type Encounter = {
 };
 
 /** The household surface's top-level view; other roles ignore it. */
-export type HouseholdView = "home" | "path" | "nearby";
+export type HouseholdView = "home" | "path" | "nearby" | "gate";
+
+/** Roles behind the health-worker gate. */
+export type GatedRole = "chp" | "facility";
 
 export type CareState = {
   role: Role;
   locale: "en" | "sw";
   view: HouseholdView;
+  /** Device-level access grants for the gated surfaces (placeholder for real
+   *  worker identity; codes are checked server-side in /api/access). */
+  grants: Record<GatedRole, boolean>;
+  gateRole: GatedRole | null;
   injectedFailures: NamedFailure[];
   encounter: Encounter | null;
   referral: Referral | null;

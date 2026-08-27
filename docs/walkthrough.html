@@ -1,4 +1,4 @@
-<!-- Tunza prototype-one walkthrough: a self-contained static demo of the care path (generated snapshot; the app in this repo is the source of truth). Opens on the English red home screen. -->
+<!-- Tunza prototype-one walkthrough: a self-contained static demo of the care path (generated snapshot; the app in this repo is the source of truth). Opens on the English red home screen; CHP and facility are behind the demo access gate. -->
 <title>Tunza Prototype One</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -175,6 +175,11 @@
     background: var(--raised); padding: 0.9rem 1rem; font-size: 1rem; font-weight: 500; cursor: pointer;
   }
   .photo-label input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .gate-input {
+    min-height: 3rem; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--raised); padding: 0 1rem; font-size: 1rem; width: 100%;
+  }
+  .gate-input:focus { border-color: var(--action); outline: none; }
 
   dl.facts { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
   dl.facts dt { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); }
@@ -248,7 +253,14 @@ en: {
   homeCardNearbyTitle:"Nearby facilities", homeCardNearbyDesc:"See your area",
   homeCardContinueTitle:"Continue",
   homeMission:"Built for community health workers where the nearest doctor may be hours away.",
-  homeHealthWorker:"Are you a health worker?", nearbyTitle:"Nearby facilities",
+  homeHealthWorker:"Are you a health worker?",
+  gateHeading:"Sign in to continue",
+  gateBody:"This area is for registered health workers. Choose your role and enter your access code.",
+  gateChooseChp:"I'm a community health promoter", gateChooseFacility:"I work at a facility",
+  gateCodeLabel:"Access code", gateSubmit:"Sign in",
+  gateWrongCode:"That code did not work. Check with your coordinator.",
+  gateDemoHint:"Demo codes: CHP-DEMO and FACILITY-DEMO.",
+  nearbyTitle:"Nearby facilities",
   nearbyDemoFallback:"Showing demo facilities — live lookup is not available right now.",
   facilityUrgentCapable:"Can take urgent cases", facilityGeneralCare:"General care",
   whoQuestion:"Who needs help?", whoSelf:"Me", whoAdult:"An adult at home", whoChild:"A child", whoUnknown:"I'm not sure",
@@ -363,7 +375,14 @@ sw: {
   homeCardNearbyTitle:"Vituo vya karibu", homeCardNearbyDesc:"Ona eneo lako",
   homeCardContinueTitle:"Endelea",
   homeMission:"Imetengenezwa kwa ajili ya wahudumu wa afya ya jamii ambapo daktari wa karibu anaweza kuwa masaa mengi mbali.",
-  homeHealthWorker:"Wewe ni mhudumu wa afya?", nearbyTitle:"Vituo vya karibu",
+  homeHealthWorker:"Wewe ni mhudumu wa afya?",
+  gateHeading:"Ingia ili kuendelea",
+  gateBody:"Sehemu hii ni ya wahudumu wa afya waliosajiliwa. Chagua nafasi yako na uweke msimbo wako wa kuingia.",
+  gateChooseChp:"Mimi ni mhamasishaji wa afya ya jamii", gateChooseFacility:"Nafanya kazi katika kituo cha afya",
+  gateCodeLabel:"Msimbo wa kuingia", gateSubmit:"Ingia",
+  gateWrongCode:"Msimbo huo haukufanya kazi. Wasiliana na mratibu wako.",
+  gateDemoHint:"Misimbo ya majaribio: CHP-DEMO na FACILITY-DEMO.",
+  nearbyTitle:"Vituo vya karibu",
   nearbyDemoFallback:"Vituo vya majaribio vinaonyeshwa — utafutaji wa moja kwa moja haupatikani sasa.",
   facilityUrgentCapable:"Inaweza kupokea dharura", facilityGeneralCare:"Huduma za kawaida",
   whoQuestion:"Nani anahitaji msaada?", whoSelf:"Mimi", whoAdult:"Mtu mzima nyumbani", whoChild:"Mtoto", whoUnknown:"Sina uhakika",
@@ -687,11 +706,12 @@ function warningCopy(named) {
 const FAILURES = ["offline","no_facility_response","redirected","stale_information","incomplete_assessment","weak_connection"];
 const KEY = "tunza.proto1";
 const newEncounter = () => ({ answers:{ ...EMPTY_ANSWERS }, asked:[], currentQuestion:"who", decision:null, assessedAt: Date.now() });
-let state = { role:"household", locale:"en", view:"home", injectedFailures:[], encounter:newEncounter(), referral:null, online:true };
-const ui = { demoOpen:false, whyOpen:false, moreOpen:false, otherOpen:false, missingOpen:false, entryMode:"type", listening:false, speakMessage:null };
+let state = { role:"household", locale:"en", view:"home", grants:{ chp:false, facility:false }, gateRole:null, injectedFailures:[], encounter:newEncounter(), referral:null, online:true };
+const ui = { demoOpen:false, whyOpen:false, moreOpen:false, otherOpen:false, missingOpen:false, entryMode:"type", listening:false, speakMessage:null, gateCode:"", gateStatus:"idle" };
+const DEMO_ACCESS = { chp:"CHP-DEMO", facility:"FACILITY-DEMO" };
 try {
   const raw = localStorage.getItem(KEY);
-  if (raw) { const p = JSON.parse(raw); if (p && p.role && p.encounter) state = { ...state, ...p, view: p.view || "home" }; }
+  if (raw) { const p = JSON.parse(raw); if (p && p.role && p.encounter) state = { ...state, ...p, view: p.view || "home", grants: { chp: !!(p.grants && p.grants.chp), facility: !!(p.grants && p.grants.facility) }, gateRole: null }; }
 } catch (e) { /* storage unavailable: run in memory */ }
 state.online = typeof navigator === "undefined" || navigator.onLine !== false;
 // A fresh page load ALWAYS opens at the front door — the red home screen,
@@ -716,7 +736,15 @@ function activeFailures() {
 
 /* ---------- actions ---------- */
 const act = {
-  setRole(role) { state.role = role; render(); },
+  setRole(role) {
+    // Gated surfaces open only for granted roles; everyone else gets the gate.
+    if (role !== "household" && !state.grants[role]) {
+      state.role = "household"; state.view = "gate"; state.gateRole = role;
+      ui.gateCode = ""; ui.gateStatus = "idle";
+      render(); return;
+    }
+    state.role = role; render();
+  },
   setLocale(l) { state.locale = l; document.documentElement.lang = l; render(); },
   setView(v) { state.view = v; render(); },
   toggleFailure(f) {
@@ -766,7 +794,7 @@ const act = {
     state.encounter = { ...e, currentQuestion:"main_problem", decision:null };
     render();
   },
-  reset() { state.injectedFailures = []; state.referral = null; state.encounter = newEncounter(); state.view = "home"; ui.entryMode = "type"; render(); },
+  reset() { state.injectedFailures = []; state.referral = null; state.encounter = newEncounter(); state.role = "household"; state.view = "home"; state.grants = { chp:false, facility:false }; state.gateRole = null; ui.entryMode = "type"; ui.gateCode = ""; ui.gateStatus = "idle"; render(); },
 };
 
 /* ---------- speech (degrades by design) ---------- */
@@ -1038,8 +1066,32 @@ function homeHtml() {
       </button>` : ""}
     </div>
     <p class="home-mission">${esc(t("homeMission"))}</p>
-    <button class="home-link" data-act="health-worker">${esc(t("homeHealthWorker"))}</button>
+    <button class="home-link" data-act="view-gate">${esc(t("homeHealthWorker"))}</button>
   </section>`;
+}
+function gateHtml() {
+  const chosen = state.gateRole;
+  const choice = (role, key) => `<button class="choice" data-act="gate-choose:${role}" aria-pressed="${chosen === role}" style="${chosen === role ? "border-color:var(--action)" : ""}">${esc(t(key))}</button>`;
+  return `<div class="stack4">
+    <button class="back-btn" data-act="view-home">${esc(t("back"))}</button>
+    <section class="stack5">
+      <header class="stack2">
+        <h1 class="q">${esc(t("gateHeading"))}</h1>
+        <p class="body soft">${esc(t("gateBody"))}</p>
+      </header>
+      <div class="stack2" role="group" aria-label="${esc(t("gateHeading"))}">
+        ${choice("chp", "gateChooseChp")}
+        ${choice("facility", "gateChooseFacility")}
+      </div>
+      ${chosen ? `<div class="stack3">
+        <label class="stack2"><span class="field-label">${esc(t("gateCodeLabel"))}</span>
+          <input type="text" class="gate-input" autocapitalize="characters" autocomplete="off" value="${esc(ui.gateCode)}" data-input="gate-code"></label>
+        ${ui.gateStatus === "error" ? `<p class="label w500" style="color:var(--urgent)" role="alert">${esc(t("gateWrongCode"))}</p>` : ""}
+        <button class="primary" data-act="gate-submit">${esc(t("gateSubmit"))}</button>
+      </div>` : ""}
+      <p class="caption soft">${esc(t("gateDemoHint"))}</p>
+    </section>
+  </div>`;
 }
 function nearbyHtml() {
   return `<div class="stack4">
@@ -1059,6 +1111,7 @@ function surfaceHtml() {
   const e = state.encounter; const r = state.referral;
   if (state.role === "household" && state.view === "home") return homeHtml();
   if (state.role === "household" && state.view === "nearby") return nearbyHtml();
+  if (state.role === "household" && state.view === "gate") return gateHtml();
   if (state.role === "facility") {
     if (!r) return attentionHtml(t("incomingTitle"), [{ id:"none", label:t("noIncoming"), detail:t("noIncomingDetail") }], null);
     if (r.stage === "completed" && !r.outcome) {
@@ -1094,9 +1147,7 @@ function chromeHtml() {
   const roleLabel = t(roles.find(x => x[0] === state.role)[1]);
   return `<header class="chrome">
     <div class="chrome-row">
-      ${state.role === "household"
-        ? `<button class="wordmark" data-act="view-home">Tunza</button>`
-        : `<p class="wordmark">Tunza</p>`}
+      <button class="wordmark" data-act="go-home">Tunza</button>
       <div class="chrome-side">
         <p class="label w500 soft">${esc(t("viewingAs"))} ${esc(roleLabel)}</p>
         <button class="lang-btn" data-act="lang">${esc(t("languageButton"))}</button>
@@ -1105,7 +1156,6 @@ function chromeHtml() {
     <button class="demo-summary ${ui.demoOpen ? "open" : ""}" data-ui="demoOpen" aria-expanded="${ui.demoOpen}">${esc(t("demoLabel"))}</button>
     ${ui.demoOpen ? (() => {
       const panel = `<div class="demo-panel">
-      <div class="seg">${roles.map(([id, k]) => `<button class="${state.role === id ? "on" : ""}" data-role="${id}">${esc(t(k))}</button>`).join("")}</div>
       <p class="eyebrow">${esc(t("namedConditions"))}</p>
       <div class="stack2" style="gap:0.25rem">
         ${FAILURES.map(f => {
@@ -1142,10 +1192,23 @@ document.getElementById("phone").addEventListener("click", (ev) => {
   const a = el.dataset.act;
   if (!a) return;
   if (a === "lang") act.setLocale(state.locale === "en" ? "sw" : "en");
+  else if (a === "go-home") { state.role = "household"; state.view = "home"; render(); }
   else if (a === "view-home") act.setView("home");
   else if (a === "view-path") act.setView("path");
   else if (a === "view-nearby") act.setView("nearby");
-  else if (a === "health-worker") act.setRole("chp");
+  else if (a === "view-gate") { state.gateRole = null; ui.gateCode = ""; ui.gateStatus = "idle"; act.setView("gate"); }
+  else if (a.startsWith("gate-choose:")) {
+    const role = a.slice(12);
+    if (state.grants[role]) { act.setRole(role); }
+    else { state.gateRole = role; ui.gateCode = ""; ui.gateStatus = "idle"; render(); }
+  }
+  else if (a === "gate-submit") {
+    const role = state.gateRole;
+    if (role && ui.gateCode.trim().toUpperCase() === DEMO_ACCESS[role]) {
+      state.grants[role] = true; state.role = role; state.view = "home"; state.gateRole = null; ui.gateCode = "";
+      render();
+    } else { ui.gateStatus = "error"; render(); }
+  }
   else if (a === "reset") act.reset();
   else if (a === "back") act.goBack();
   else if (a === "dont-know") act.answer(state.encounter.currentQuestion, state.encounter.currentQuestion === "what" ? "" : "unknown");
@@ -1159,6 +1222,10 @@ document.getElementById("phone").addEventListener("click", (ev) => {
 });
 document.getElementById("phone").addEventListener("input", (ev) => {
   const el = ev.target;
+  if (el.dataset && el.dataset.input === "gate-code") {
+    ui.gateCode = el.value;
+    return;
+  }
   if (el.dataset && el.dataset.input === "presentation") {
     act.setPresentation(el.value);
     const btn = document.querySelector('[data-act="continue-what"]');

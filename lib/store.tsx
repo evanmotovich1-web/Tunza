@@ -21,6 +21,7 @@ import { createId, nowIso } from "./ids";
 import type {
   CareState,
   Encounter,
+  GatedRole,
   HouseholdView,
   NamedFailure,
   OutcomeCode,
@@ -45,6 +46,8 @@ type Action =
   | { type: "setRole"; role: Role }
   | { type: "setLocale"; locale: Locale }
   | { type: "setView"; view: HouseholdView }
+  | { type: "setGateRole"; role: GatedRole | null }
+  | { type: "grantRole"; role: GatedRole }
   | { type: "setOnline"; online: boolean }
   | { type: "toggleFailure"; failure: NamedFailure }
   | { type: "startEncounter"; by: Role }
@@ -87,6 +90,8 @@ export const initialCareState: CareState = {
   role: "household",
   locale: DEFAULT_LOCALE,
   view: "home",
+  grants: { chp: false, facility: false },
+  gateRole: null,
   injectedFailures: [],
   encounter: newEncounter("household"),
   referral: null,
@@ -102,11 +107,26 @@ function reducer(state: CareState, action: Action): CareState {
     case "hydrate":
       return { ...action.state, online: state.online };
     case "setRole":
+      // The gated surfaces open only for granted roles; anyone else is sent
+      // to the sign-in gate instead. Enforced here so no caller can skip it.
+      if (action.role !== "household" && !state.grants[action.role]) {
+        return { ...state, role: "household", view: "gate", gateRole: action.role };
+      }
       return { ...state, role: action.role };
     case "setLocale":
       return { ...state, locale: action.locale };
     case "setView":
       return { ...state, view: action.view };
+    case "setGateRole":
+      return { ...state, gateRole: action.role };
+    case "grantRole":
+      return {
+        ...state,
+        grants: { ...state.grants, [action.role]: true },
+        role: action.role,
+        view: "home",
+        gateRole: null,
+      };
     case "setOnline":
       return { ...state, online: action.online };
     case "toggleFailure": {
@@ -271,13 +291,13 @@ function reducer(state: CareState, action: Action): CareState {
       };
     }
     case "reset":
+      // Start over is a fresh demo: back to the household front door, grants
+      // cleared, everything else at its initial state.
       return {
         ...initialCareState,
-        role: state.role,
         locale: state.locale,
         online: state.online,
-        injectedFailures: [],
-        encounter: newEncounter(state.role === "facility" ? "household" : state.role),
+        encounter: newEncounter("household"),
       };
     default:
       return state;
@@ -292,6 +312,8 @@ type CareContextValue = {
     setRole: (role: Role) => void;
     setLocale: (locale: Locale) => void;
     setView: (view: HouseholdView) => void;
+    setGateRole: (role: GatedRole | null) => void;
+    grantRole: (role: GatedRole) => void;
     toggleFailure: (failure: NamedFailure) => void;
     startEncounter: () => void;
     answer: (question: QuestionId, value: string) => void;
@@ -327,10 +349,18 @@ function readStoredState(): CareState {
     if (raw) {
       const parsed = JSON.parse(raw) as CareState;
       if (parsed?.role) {
+        const grants = {
+          chp: parsed.grants?.chp === true,
+          facility: parsed.grants?.facility === true,
+        };
+        const roleAllowed = parsed.role === "household" || grants[parsed.role];
         return {
           ...parsed,
+          grants,
+          gateRole: null,
+          role: roleAllowed ? parsed.role : "household",
           locale: parsed.locale ?? DEFAULT_LOCALE,
-          view: parsed.view ?? "home",
+          view: roleAllowed ? (parsed.view ?? "home") : "home",
           online: navigator.onLine,
         };
       }
@@ -349,6 +379,8 @@ function makeDispatch(
     setRole: (nextRole) => dispatch({ type: "setRole", role: nextRole }),
     setLocale: (locale) => dispatch({ type: "setLocale", locale }),
     setView: (view) => dispatch({ type: "setView", view }),
+    setGateRole: (role) => dispatch({ type: "setGateRole", role }),
+    grantRole: (role) => dispatch({ type: "grantRole", role }),
     toggleFailure: (failure) => dispatch({ type: "toggleFailure", failure }),
     startEncounter: () => dispatch({ type: "startEncounter", by: role }),
     answer: (question, value) => dispatch({ type: "answer", question, value }),

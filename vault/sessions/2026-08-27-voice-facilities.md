@@ -37,6 +37,14 @@
   on the Continue card. The page source is archived at `docs/walkthrough.html`
   (generated snapshot — the app is the source of truth).
 
+## The health-worker gate (same day, per Evan)
+
+- Home is the app's entry hub; wordmark → home from every role. CHP and
+  facility require sign-in: `/api/access` + RoleGate, demo codes until env
+  codes are set, grants per device, reducer-enforced, Start over re-locks.
+  Demo panel lost its role switcher (was a gate backdoor). Deploy note:
+  Vercel import + optional env keys is all that's needed.
+
 ## Gotchas
 
 - Headless Chromium's SpeechRecognition neither errors nor ends — a bad test

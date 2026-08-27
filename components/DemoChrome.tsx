@@ -23,20 +23,6 @@ export function DemoChrome() {
 
   const demoPanel = (
     <div className="mt-3 flex flex-col gap-3">
-      <div className="grid grid-cols-3 gap-1 rounded-xl bg-line/70 p-1">
-        {ROLES.map((role) => (
-          <button
-            key={role.id}
-            type="button"
-            onClick={() => dispatch.setRole(role.id)}
-            className={`min-h-10 rounded-lg text-label font-medium ${
-              state.role === role.id ? "bg-raised text-ink shadow-sm" : "text-ink-soft"
-            }`}
-          >
-            {t(role.labelKey, locale)}
-          </button>
-        ))}
-      </div>
       <p className="text-caption font-medium uppercase tracking-[0.12em] text-ink-soft">
         {t("namedConditions", locale)}
       </p>
@@ -70,19 +56,18 @@ export function DemoChrome() {
       }`}
     >
       <div className="flex items-center justify-between gap-3">
-        {state.role === "household" ? (
-          <button
-            type="button"
-            onClick={() => dispatch.setView("home")}
-            className={`text-heading font-semibold tracking-tight ${
-              onBrand ? "text-white focus-visible:outline-white" : "text-action"
-            }`}
-          >
-            Tunza
-          </button>
-        ) : (
-          <p className="text-heading font-semibold tracking-tight text-action">Tunza</p>
-        )}
+        <button
+          type="button"
+          onClick={() => {
+            dispatch.setRole("household");
+            dispatch.setView("home");
+          }}
+          className={`text-heading font-semibold tracking-tight ${
+            onBrand ? "text-white focus-visible:outline-white" : "text-action"
+          }`}
+        >
+          Tunza
+        </button>
         <div className="flex items-center gap-3">
           <p
             className={`text-label font-medium ${onBrand ? "text-white/70" : "text-ink-soft"}`}
