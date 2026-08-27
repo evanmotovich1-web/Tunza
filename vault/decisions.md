@@ -4,8 +4,10 @@ Dated, newest first. Each entry: what was decided, and why it holds.
 
 ## 2026-08-26 — The front door wears the brand
 The household landing is the old app's home screen rebuilt in the matte
-finish — the ONE full-brand surface (`--brand-deep` → `--action`). Everything
-after it wears paper, keeping red scarce. Old copy reused verbatim from
+finish — the ONE full-brand surface (`--brand-deep` → `--action`). Per Evan's
+review, it is full-screen red: the header chrome, footer, and the ground
+behind the column all wear it (white chrome text; the Demo panel opens on a
+paper card). Everything after it wears paper, keeping red scarce. Old copy reused verbatim from
 `medical-triage/lib/i18n.ts`; History slot became a live Continue card fed by
 the referral machine; "Are you a doctor?" became "Are you a health worker?" →
 CHP surface.
