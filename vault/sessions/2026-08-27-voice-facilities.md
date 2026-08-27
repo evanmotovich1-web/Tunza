@@ -29,6 +29,14 @@
   unanswered → "locating" could hang forever. Added a 12s watchdog →
   fallback.
 
+## Walkthrough landing fixes (same day, after Evan's review)
+
+- The demo page persists progress; returning visitors landed wherever they
+  left off (other role, other language) and never saw the red home. Fresh
+  loads now force household + home view + English; saved care paths surface
+  on the Continue card. The page source is archived at `docs/walkthrough.html`
+  (generated snapshot — the app is the source of truth).
+
 ## Gotchas
 
 - Headless Chromium's SpeechRecognition neither errors nor ends — a bad test
