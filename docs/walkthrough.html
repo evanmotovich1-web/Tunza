@@ -1,0 +1,1178 @@
+<!-- Tunza prototype-one walkthrough: a self-contained static demo of the care path (generated snapshot; the app in this repo is the source of truth). Opens on the English red home screen. -->
+<title>Tunza Prototype One</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  :root {
+    --ink: #1c1916;
+    --ink-soft: #5c564c;
+    --ground: #e8e0d2;
+    --paper: #f4efe6;
+    --raised: #fffcf7;
+    --line: #e2d8c8;
+    --action: #7c1f18;
+    --action-ink: #ffffff;
+    --brand-deep: #4a1210;
+    --urgent: #b3261e;
+    --urgent-soft: #f8e4df;
+    --today: #8a4b12;
+    --today-soft: #f6e6d0;
+    --watch: #1d4a73;
+    --watch-soft: #e3eef7;
+    --warn: #7a4e0b;
+    --warn-soft: #f7edd6;
+    --radius: 1rem;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { min-height: 100%; }
+  body {
+    font-family: "Inter", Roboto, system-ui, sans-serif;
+    font-weight: 400;
+    background: var(--ground);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+  }
+  button, input, textarea { font: inherit; color: inherit; }
+  button { cursor: pointer; background: none; border: none; text-align: left; }
+  button:focus-visible, textarea:focus-visible, input:focus-visible, label:focus-within {
+    outline: 2px solid var(--action);
+    outline-offset: 2px;
+  }
+  .decision { font-size: 1.75rem; line-height: 2.125rem; letter-spacing: -0.01em; }
+  .heading  { font-size: 1.25rem; line-height: 1.625rem; }
+  .body     { font-size: 1rem; line-height: 1.5rem; }
+  .label    { font-size: 0.875rem; line-height: 1.125rem; }
+  .caption  { font-size: 0.75rem; line-height: 1rem; }
+  .eyebrow {
+    font-size: 0.75rem; line-height: 1rem;
+    font-weight: 500; text-transform: uppercase; letter-spacing: 0.12em;
+    color: var(--ink-soft);
+  }
+  .w400 { font-weight: 400; } .w500 { font-weight: 500; }
+  .w600 { font-weight: 600; } .w700 { font-weight: 700; }
+  .soft { color: var(--ink-soft); }
+  .num { font-variant-numeric: tabular-nums; }
+
+  .stage { min-height: 100vh; display: flex; flex-direction: column; align-items: center; }
+  .phone {
+    width: 100%; max-width: 430px; min-height: 100vh;
+    background: var(--paper);
+    box-shadow: 0 0 0 1px rgba(28,25,22,0.06);
+    display: flex; flex-direction: column;
+  }
+  header.chrome {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(244,239,230,0.95); backdrop-filter: blur(6px);
+    border-bottom: 1px solid var(--line);
+    padding: 0.75rem 1.25rem;
+  }
+  .chrome-row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .wordmark { font-size: 1.25rem; font-weight: 600; letter-spacing: -0.01em; color: var(--action); }
+  .chrome-side { display: flex; align-items: center; gap: 0.75rem; }
+  .lang-btn {
+    min-height: 2.5rem; padding: 0 0.5rem;
+    border: 1px solid var(--line); border-radius: 0.5rem;
+    font-size: 0.875rem; font-weight: 500;
+    background: var(--raised);
+  }
+  .demo-summary {
+    margin-top: 0.5rem; font-size: 0.875rem; font-weight: 500; color: var(--ink-soft);
+    display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2rem;
+  }
+  .demo-summary::before { content: "▸"; font-size: 0.7rem; }
+  .demo-summary.open::before { content: "▾"; }
+  .demo-panel { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem; background: rgba(226,216,200,0.7); border-radius: 0.75rem; padding: 0.25rem; }
+  .seg button { min-height: 2.5rem; border-radius: 0.55rem; font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); text-align: center; }
+  .seg button.on { background: var(--raised); color: var(--ink); box-shadow: 0 1px 2px rgba(28,25,22,0.08); }
+  .check-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; min-height: 1.75rem; }
+  .check-row input { width: 1rem; height: 1rem; accent-color: var(--action); }
+  .link-btn { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); text-decoration: underline; min-height: 2.25rem; }
+
+  main { flex: 1; padding: 1.25rem; display: flex; flex-direction: column; gap: 1rem; }
+  footer.phone-foot { padding: 0.5rem 1.25rem 1.5rem; }
+  footer.phone-foot p { text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-soft); }
+
+  .stack5 { display: flex; flex-direction: column; gap: 1.25rem; }
+  .stack4 { display: flex; flex-direction: column; gap: 1rem; }
+  .stack3 { display: flex; flex-direction: column; gap: 0.75rem; }
+  .stack2 { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  h1.q { font-size: 1.75rem; line-height: 2.125rem; font-weight: 600; letter-spacing: -0.01em; }
+  h1.verdict { font-size: 1.75rem; line-height: 2.125rem; font-weight: 700; letter-spacing: -0.01em; }
+  .verdict.go_now { color: var(--urgent); }
+  .verdict.get_care_today { color: var(--today); }
+  .verdict.monitor_at_home { color: var(--watch); }
+  .verdict.need_one_more_answer { color: var(--ink); }
+  .status-line { font-size: 1rem; line-height: 1.5rem; font-weight: 600; }
+
+  .choice {
+    min-height: 3.5rem; border-radius: var(--radius);
+    border: 1px solid var(--line); background: var(--raised);
+    padding: 0.75rem 1rem; font-size: 1rem; font-weight: 500;
+    box-shadow: 0 1px 0 rgba(28,25,22,0.04);
+    transition: border-color 120ms;
+    display: block; width: 100%;
+  }
+  .choice:hover { border-color: rgba(28,25,22,0.3); }
+  .primary {
+    min-height: 3.5rem; border-radius: var(--radius);
+    background: var(--action); color: var(--action-ink);
+    font-size: 1rem; font-weight: 600; text-align: center;
+    padding: 0 1rem; display: block; width: 100%;
+  }
+  .primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .dont-know {
+    min-height: 3rem; border-radius: var(--radius);
+    border: 1px dashed rgba(28,25,22,0.25);
+    padding: 0.75rem 1rem; font-size: 1rem; color: var(--ink-soft);
+    display: block; width: 100%;
+  }
+  .back-btn { align-self: flex-start; font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); min-height: 2rem; }
+
+  .card {
+    border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--raised); padding: 1rem;
+  }
+  .warning {
+    border-radius: var(--radius); padding: 0.75rem 1rem;
+  }
+  .warning .eyebrow { color: inherit; opacity: 0.9; }
+  .warning p.t { margin-top: 0.25rem; font-size: 1rem; line-height: 1.5rem; font-weight: 600; }
+  .warning p.b { margin-top: 0.25rem; font-size: 0.875rem; line-height: 1.125rem; opacity: 0.9; }
+  .tone-offline, .tone-stale_information, .tone-incomplete_assessment, .tone-weak_connection { background: var(--warn-soft); color: var(--warn); }
+  .tone-no_facility_response { background: var(--today-soft); color: var(--today); }
+  .tone-redirected, .tone-watch_sign { background: var(--watch-soft); color: var(--watch); }
+  .tone-danger_sign { background: var(--urgent-soft); color: var(--urgent); }
+
+  .disclosure { border-radius: var(--radius); border: 1px solid var(--line); background: var(--raised); }
+  .disclosure > button {
+    width: 100%; padding: 0.75rem 1rem; font-size: 0.875rem; font-weight: 500;
+    display: flex; align-items: center; gap: 0.4rem; min-height: 2.75rem;
+  }
+  .disclosure > button::before { content: "▸"; font-size: 0.7rem; color: var(--ink-soft); }
+  .disclosure.open > button::before { content: "▾"; }
+  .disclosure .inner { padding: 0 1rem 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+
+  .tabs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.25rem; background: rgba(226,216,200,0.7); border-radius: 0.75rem; padding: 0.25rem; }
+  .tabs button { min-height: 2.5rem; border-radius: 0.55rem; font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); text-align: center; }
+  .tabs button[aria-selected="true"] { background: var(--raised); color: var(--ink); box-shadow: 0 1px 2px rgba(28,25,22,0.08); }
+  textarea {
+    resize: none; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--raised); padding: 0.75rem 1rem; font-size: 1rem; line-height: 1.4;
+    width: 100%;
+  }
+  textarea:focus { border-color: var(--action); outline: none; }
+  .field-label { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); }
+  .speak-box {
+    min-height: 3.5rem; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--raised); padding: 0.9rem 1rem; font-size: 1rem; font-weight: 600;
+    width: 100%;
+  }
+  .transcript { border-radius: 0.75rem; background: var(--raised); padding: 0.5rem 0.75rem; font-size: 1rem; }
+  .photo-label {
+    display: block; min-height: 3.5rem; border-radius: var(--radius); border: 1px solid var(--line);
+    background: var(--raised); padding: 0.9rem 1rem; font-size: 1rem; font-weight: 500; cursor: pointer;
+  }
+  .photo-label input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+
+  dl.facts { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem; }
+  dl.facts dt { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); }
+  dl.facts dd { font-size: 1rem; font-weight: 600; }
+  .freshness { font-size: 0.875rem; font-weight: 500; color: var(--ink-soft); }
+  .freshness.stale { color: var(--today); }
+  .divider { border-top: 1px solid var(--line); margin-top: 1rem; padding-top: 0.75rem; }
+  ul.plain { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.75rem; }
+  .item-label { font-size: 1rem; font-weight: 600; }
+  .item-detail { font-size: 0.875rem; color: var(--ink-soft); margin-top: 0.15rem; }
+  .secondary-btn {
+    min-height: 3rem; border-radius: 0.75rem; border: 1px solid var(--line);
+    padding: 0 0.75rem; font-size: 1rem; font-weight: 500; display: block; width: 100%;
+  }
+  .page-caption { padding: 1rem; text-align: center; font-size: 0.75rem; line-height: 1rem; color: var(--ink-soft); }
+
+  .home { flex: 1; display: flex; flex-direction: column; color: #ffffff; }
+
+  /* The front door wears the brand edge to edge — chrome and footer included. */
+  .stage.on-brand { background: var(--brand-deep); }
+  .phone.on-brand { background: linear-gradient(to bottom, var(--brand-deep), var(--action)); }
+  .phone.on-brand header.chrome { background: rgba(74,18,16,0.95); border-color: rgba(255,255,255,0.15); }
+  .phone.on-brand .wordmark { color: #ffffff; }
+  .phone.on-brand .chrome-row .soft { color: rgba(255,255,255,0.7); }
+  .phone.on-brand .demo-summary { color: rgba(255,255,255,0.7); }
+  .phone.on-brand .lang-btn { border-color: rgba(255,255,255,0.3); background: rgba(255,255,255,0.1); color: #ffffff; }
+  .phone.on-brand .phone-foot p { color: rgba(255,255,255,0.7); }
+  .phone.on-brand button:focus-visible { outline-color: #ffffff; }
+  .demo-paper { border-radius: var(--radius); background: var(--paper); padding: 0.75rem; color: var(--ink); }
+  .demo-paper .soft { color: var(--ink-soft); }
+  .home-title { margin-top: 2.5rem; font-size: 3rem; line-height: 1; font-weight: 700; letter-spacing: -0.01em; }
+  .home-tagline { margin-top: 0.75rem; font-size: 1.25rem; line-height: 1.625rem; color: rgba(255,255,255,0.85); }
+  .home-cta {
+    margin-top: 2rem; min-height: 3.5rem; border-radius: var(--radius);
+    background: var(--raised); color: var(--action);
+    font-size: 1rem; font-weight: 600; text-align: center;
+    padding: 0 1rem; display: block; width: 100%;
+  }
+  .home-cards { margin-top: 1rem; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+  .home-card {
+    border-radius: var(--radius); border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.1); padding: 1rem; color: #ffffff;
+    transition: background 120ms;
+  }
+  .home-card:hover { background: rgba(255,255,255,0.15); }
+  .home-card.wide { grid-column: 1 / -1; }
+  .home-card .ct { font-size: 0.875rem; line-height: 1.125rem; font-weight: 600; }
+  .home-card .cd { margin-top: 0.25rem; font-size: 0.75rem; line-height: 1rem; color: rgba(255,255,255,0.7); }
+  .home-mission { margin-top: auto; padding-top: 2.5rem; font-size: 0.875rem; line-height: 1.125rem; color: rgba(255,255,255,0.7); }
+  .home-link {
+    margin-top: 0.75rem; align-self: flex-start;
+    font-size: 0.875rem; line-height: 1.125rem; font-weight: 500; color: #ffffff;
+    text-decoration: underline; text-underline-offset: 2px; min-height: 2rem;
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="stage">
+  <div class="phone" id="phone"></div>
+  <p class="page-caption">Tunza · prototype one · demo data — not clinical software</p>
+</div>
+
+<script>
+"use strict";
+
+/* ---------- copy: every string, both languages ---------- */
+const COPY = {
+en: {
+  homeTagline:"Healthcare, anywhere, anytime.", homeGetStarted:"Get started",
+  homeCardAssessTitle:"Check symptoms", homeCardAssessDesc:"Text, voice or photo",
+  homeCardNearbyTitle:"Nearby facilities", homeCardNearbyDesc:"See your area",
+  homeCardContinueTitle:"Continue",
+  homeMission:"Built for community health workers where the nearest doctor may be hours away.",
+  homeHealthWorker:"Are you a health worker?", nearbyTitle:"Nearby facilities",
+  nearbyDemoFallback:"Showing demo facilities — live lookup is not available right now.",
+  facilityUrgentCapable:"Can take urgent cases", facilityGeneralCare:"General care",
+  whoQuestion:"Who needs help?", whoSelf:"Me", whoAdult:"An adult at home", whoChild:"A child", whoUnknown:"I'm not sure",
+  whatQuestion:"What is happening?", whatHint:"Say it the way you would tell a neighbour.", whatPlaceholder:"Fever, coughing, not drinking…", whatContinue:"Continue",
+  modeSpeak:"Speak", modeType:"Type", modePhoto:"Photo", entryAria:"How to answer",
+  typeWhatYouSee:"Type what you see", tapToSpeak:"Tap to speak", listening:"Listening…", speakNotAvailable:"Speak isn't available",
+  speakUnavailable:"Speaking isn't available on this device. Type instead.",
+  photoTake:"Take or choose a photo", photoAttachedDemo:"Photo attached (demo)", photoRemove:"Remove photo",
+  photoHint:"Use this when a rash, wound, or breathing effort is easier to show than to describe.", addNote:"Add a short note if you can",
+  dontKnow:"I don't know", back:"Previous",
+  awakeQuestion:"Are they awake and responding?", awakeAlert:"Yes, alert", awakeSleepy:"Sleepy or confused", awakeNotWaking:"Not waking up",
+  breathingQuestion:"How is their breathing?", breathingFine:"Breathing looks fine", breathingDifficult:"Fast or hard to breathe", breathingSevere:"Struggling to breathe",
+  drinkingQuestion:"Can they drink?", drinkingQuestionChild:"Can they drink or breastfeed?", drinkingYes:"Yes", drinkingLittle:"Only a little", drinkingNo:"No",
+  durationQuestion:"How long has this been going on?", durationToday:"Started today", durationTwoDays:"1–2 days", durationLonger:"Longer than that",
+  mainProblemQuestion:"What is the main problem right now?", mainBreathing:"Breathing", mainFever:"Fever", mainInjury:"Injury or bleeding", mainStomach:"Stomach or not eating", mainOther:"Something else",
+  nextAction:"Next action", goNow:"Go now", getCareToday:"Get care today", monitorAtHome:"Monitor at home", needOneMore:"I need one more answer",
+  goNowStatus:"This looks urgent. Do not wait.", getCareStatus:"They should be seen today, not next week.",
+  monitorStatus:"Stay home for now, and watch these signs.", needOneMoreStatus:"One question would make this safer.",
+  prepareFacility:"Get a facility ready", createReferral:"Create referral", answerTheQuestion:"Answer the question", whyThis:"Why this?", moreDetail:"More detail",
+  dangerNotWaking:"Not waking", dangerSeizure:"Seizure", dangerNotBreathing:"Not breathing", dangerBlueLips:"Blue lips",
+  dangerHeavyBleeding:"Heavy bleeding", dangerStrugglingBreathe:"Struggling to breathe", dangerChildNoDrink:"Child cannot drink",
+  watchNotWaking:"Not waking or very sleepy", watchBreathingHard:"Breathing gets hard or fast", watchCannotDrink:"Cannot drink", watchSeizureBleeding:"Seizure or heavy bleeding",
+  reasonSleepyHardBreathing:"Sleepy and breathing is hard", reasonTooLittleKnown:"Too little is known to choose safely",
+  reasonOneMoreSafer:"One more question would make this safer", reasonBreathingHarder:"Breathing is harder than usual",
+  reasonDrinkingLittle:"Drinking only a little", reasonNotDrinking:"Not drinking", reasonSleepy:"Sleepy or harder to wake",
+  reasonChildFever:"Child with fever", reasonInjurySeen:"Injury that should be seen", reasonBreathingMain:"Breathing is the main problem",
+  reasonTooLongHome:"This has gone on too long to only watch at home", reasonNoDanger:"Awake, drinking, and breathing do not show a danger sign",
+  missingWho:"Who this is for is not clear", missingWhoDetail:"Child, adult, or self changes what we ask next.",
+  missingWhat:"What is happening was not described", missingAwake:"Awake and responding is unknown",
+  missingBreathing:"Breathing is unknown", missingDrinking:"Whether they can drink is unknown",
+  missingAskMoreDetail:"The facility asked for this before accepting.", askMoreCanWalk:"Can they walk into the facility?",
+  referralEyebrow:"Referral", stageCreated:"Being prepared", stageSent:"Sent", stageReceived:"Received", stageAccepted:"Accepted",
+  stagePatientMoving:"Patient traveling", stageArrived:"Arrived", stageSeen:"Being seen", stageCompleted:"Visit complete", stageOutcomeReturned:"Outcome returned",
+  refCreatedHouseholdHeadline:"A facility is being prepared", refCreatedHouseholdStatus:"Nothing has been sent yet.",
+  refCreatedChpHeadline:"Referral prepared — not sent yet", refCreatedChpStatus:"Ready for {f}.",
+  refCreatedFacilityHeadline:"A community referral is being prepared", refCreatedFacilityStatus:"It has not reached this facility yet.",
+  refSentHouseholdHeadline:"Your referral is on the way", refSentHouseholdStatus:"{f} has not answered yet.",
+  refSentChpHeadline:"Referral sent — waiting for the facility", refSentChpStatus:"{f} has not accepted yet.",
+  refSentFacilityHeadline:"New referral — not yet reviewed", refSentFacilityStatus:"Decide whether this facility can take them.",
+  refReceivedHouseholdHeadline:"The facility has seen your referral", refReceivedHouseholdStatus:"They have not accepted yet. Stay ready.",
+  refReceivedChpHeadline:"Facility received referral — not yet accepted", refReceivedChpStatus:"{f} is deciding now.",
+  refReceivedFacilityHeadline:"Referral received — decide now", refReceivedFacilityStatus:"Accept, redirect, or ask for one missing fact.",
+  refAcceptedHouseholdHeadline:"Facility accepted — you can leave now", refAcceptedHouseholdStatus:"Go to {f}.",
+  refAcceptedChpHeadline:"Referral accepted — patient travel not yet confirmed", refAcceptedChpStatus:"{f} is waiting for them to leave.",
+  refAcceptedFacilityHeadline:"Incoming referral", refAcceptedFacilityUrgentHeadline:"Incoming urgent referral", refAcceptedFacilityStatus:"Prepare to receive them.",
+  refMovingHouseholdHeadline:"You're on the way. They know you're coming.", refMovingHouseholdStatus:"Tell them you are the Tunza referral at {f}.",
+  refMovingChpHeadline:"Patient traveling — arrival not yet confirmed", refMovingChpStatus:"{f} is expecting them.",
+  refMovingFacilityHeadline:"Patient en route — prepare to receive", refMovingFacilityStatus:"Keep the receiving place ready.",
+  refArrivedHouseholdHeadline:"You've arrived. Tell them you're the Tunza referral.", refArrivedHouseholdStatus:"Stay until they have seen you.",
+  refArrivedChpHeadline:"Patient arrived — visit not yet closed", refArrivedChpStatus:"They are at the facility.",
+  refArrivedFacilityHeadline:"Patient here — start care", refArrivedFacilityStatus:"The person has arrived.",
+  refSeenHouseholdHeadline:"They are being seen now", refSeenHouseholdStatus:"Stay until the visit is finished.",
+  refSeenChpHeadline:"Patient being seen — visit not yet closed", refSeenChpStatus:"The outcome comes after the visit is closed.",
+  refSeenFacilityHeadline:"In care — close the visit when done", refSeenFacilityStatus:"Record what happened when care is finished.",
+  refCompletedHouseholdHeadline:"Care is finished. Waiting to hear what happened.", refCompletedHouseholdStatus:"The outcome has not come back yet.",
+  refCompletedChpHeadline:"Visit completed — waiting for outcome", refCompletedChpStatus:"Follow-up depends on what the facility returns.",
+  refCompletedFacilityHeadline:"Visit complete — return the outcome", refCompletedFacilityStatus:"The community needs to know what happened.",
+  refOutcomeHouseholdHeadline:"Here's what happened, and what to do next", refOutcomeHouseholdStatus:"The facility returned an outcome.",
+  refOutcomeChpHeadline:"Outcome returned — follow-up may be needed", refOutcomeChpStatus:"Review whether this household needs a visit.",
+  refOutcomeFacilityHeadline:"Outcome sent to the community", refOutcomeFacilityStatus:"Returned.",
+  refQueuedHouseholdHeadline:"Saved on this phone", refQueuedHouseholdStatus:"You're offline. The referral will send when you're back.",
+  refQueuedChpHeadline:"Referral queued — offline", refQueuedChpStatus:"It is on this device. Send when the connection returns.",
+  refNoResponseHeadline:"No facility response", refNoResponseHouseholdStatus:"Stay where you can travel when they answer.",
+  refNoResponseOtherStatus:"Referral sent — the facility has not answered.", refNoResponseFacilityStatus:"{f} has not responded.",
+  actionSendNow:"Send now", actionSendFacility:"Send to the facility", actionSendReferral:"Send referral", actionAccept:"Accept",
+  actionWeveLeft:"We've left", actionTheyLeft:"They have left", actionWeveArrived:"We've arrived", actionTheyreHere:"They're here",
+  actionStartCare:"Start care", actionCompleteVisit:"Complete visit", actionReturnOutcome:"Return what happened",
+  expectedArrivalTpl:"expected arrival {m} min", travelTpl:"Travel {m} min",
+  failOfflineEyebrow:"Offline", failOfflineTitle:"You're offline",
+  failOfflineBody:"The assessment still works on this phone. Sending a referral waits until you are back.",
+  failNoResponseEyebrow:"No response", failNoResponseTitle:"No facility response",
+  failNoResponseBody:"The referral left this phone. The facility has not answered. Stay where you can travel when they do.",
+  failRedirectedEyebrow:"Redirected", failRedirectedTitle:"Redirected to another facility",
+  failRedirectedBody:"This place cannot take them. Another facility is now on the referral.",
+  failStaleEyebrow:"Old information", failStaleTitle:"This information may be stale",
+  failStaleBody:"A recorded value is too old to drive today's decision the same way as a fresh one.",
+  failIncompleteEyebrow:"Incomplete", failIncompleteTitle:"This assessment is incomplete",
+  failIncompleteBody:"There is not enough information to make this decision safely. One more answer is required.",
+  failWeakEyebrow:"Weak connection", failWeakTitle:"Weak connection",
+  failWeakBody:"This may take longer. The care path stays on this phone until the send is confirmed.",
+  dangerEyebrow:"Danger sign", dangerTitle:"Do not wait at home with this sign.",
+  watchEyebrow:"Watch", watchTitle:"Go now if this starts",
+  facilityEyebrow:"Facility", facilityTravelTpl:"{m} min by typical road",
+  facilityCanTake:"This facility can take them", facilityWeCanHandle:"We can handle this referral", facilityMayNot:"This facility may not be able to take them",
+  handoffEyebrow:"Handoff",
+  whyComingUrgent:"{who} needs urgent care. Danger signs were flagged in the community assessment.",
+  whyComingToday:"{who} should be seen today. This is not a wait-at-home case.",
+  whyComingDefault:"{who} is on a Tunza referral.",
+  whoSubjectChild:"A child from a demo household", whoSubjectSelf:"An adult (self) from a demo household", whoSubjectOther:"A person from a demo household",
+  handoffWho:"Who", handoffDescribed:"What they described", handoffAwake:"Awake", handoffBreathing:"Breathing",
+  handoffDrinking:"Drinking", handoffDuration:"How long", handoffTemp:"Temperature (demo)",
+  handoffPhotoOnly:"Photo only (demo)", handoffNotDescribed:"Not described", handoffStillMissing:"Still missing",
+  whoValueSelf:"Adult (self) · demo household", whoValueAdult:"Adult · demo household", whoValueChild:"Child · demo household", whoValueUnknown:"Not specified · demo household",
+  unknownValue:"Unknown", freshnessAssessedTpl:"assessed {m} min ago", freshnessOld:"recorded 8 months ago",
+  outcomeQuestion:"What happened?", outcomeTreated:"Seen and treated", outcomeHigher:"Needed a higher facility", outcomeNoShow:"Did not arrive", outcomeUnknown:"Outcome not known",
+  startEncounter:"Start encounter", noEncounter:"No active encounter", noEncounterDetail:"Start one to capture what is happening, then decide.",
+  noIncoming:"No incoming referral", noIncomingDetail:"When a household or CHP sends one, it appears here.",
+  otherActions:"Other actions", redirect:"Redirect", askMore:"Ask more",
+  needsAttention:"Needs attention", needsAction:"Needs action", missingInformation:"Missing information",
+  whoNeedsFollowUp:"Who needs follow-up", nothingWaiting:"Nothing waiting", encounterTitle:"Encounter", incomingTitle:"Incoming",
+  fuWatchHome:"Demo household — watch for danger signs", fuWatchHomeDetail:"They were advised to stay home. Check they still can drink and wake.",
+  fuConfirmTravel:"Travel not yet confirmed", fuConfirmTravelDetail:"Facility accepted. Confirm whether the household has left.",
+  fuPostOutcome:"Demo household — follow up after care", fuPostOutcomeDetail:"Confirm they are improving at home.",
+  viewingAs:"Viewing as", roleHousehold:"Household", roleChp:"CHP", roleFacility:"Facility",
+  demoLabel:"Demo", namedConditions:"Named conditions", startOver:"Start over",
+  languageButton:"Kiswahili",
+  disclaimer:"Not a substitute for emergency services or professional medical care."
+},
+sw: {
+  homeTagline:"Huduma ya afya, popote, wakati wowote.", homeGetStarted:"Anza",
+  homeCardAssessTitle:"Angalia dalili", homeCardAssessDesc:"Maandishi, sauti au picha",
+  homeCardNearbyTitle:"Vituo vya karibu", homeCardNearbyDesc:"Ona eneo lako",
+  homeCardContinueTitle:"Endelea",
+  homeMission:"Imetengenezwa kwa ajili ya wahudumu wa afya ya jamii ambapo daktari wa karibu anaweza kuwa masaa mengi mbali.",
+  homeHealthWorker:"Wewe ni mhudumu wa afya?", nearbyTitle:"Vituo vya karibu",
+  nearbyDemoFallback:"Vituo vya majaribio vinaonyeshwa — utafutaji wa moja kwa moja haupatikani sasa.",
+  facilityUrgentCapable:"Inaweza kupokea dharura", facilityGeneralCare:"Huduma za kawaida",
+  whoQuestion:"Nani anahitaji msaada?", whoSelf:"Mimi", whoAdult:"Mtu mzima nyumbani", whoChild:"Mtoto", whoUnknown:"Sina uhakika",
+  whatQuestion:"Nini kinaendelea?", whatHint:"Sema kama vile ungemwambia jirani.", whatPlaceholder:"Homa, kukohoa, hanywi…", whatContinue:"Endelea",
+  modeSpeak:"Sema", modeType:"Andika", modePhoto:"Picha", entryAria:"Jinsi ya kujibu",
+  typeWhatYouSee:"Andika unachoona", tapToSpeak:"Gusa kuongea", listening:"Inasikiliza…", speakNotAvailable:"Kusema hakupatikani",
+  speakUnavailable:"Kusema hakupatikani kwenye kifaa hiki. Andika badala yake.",
+  photoTake:"Piga au chagua picha", photoAttachedDemo:"Picha imeambatishwa (jaribio)", photoRemove:"Ondoa picha",
+  photoHint:"Tumia hii wakati upele, jeraha, au jinsi anavyopumua ni rahisi kuonyesha kuliko kueleza.", addNote:"Ongeza maelezo mafupi ukiweza",
+  dontKnow:"Sijui", back:"Rudi nyuma",
+  awakeQuestion:"Je, yuko macho na anaitika?", awakeAlert:"Ndiyo, yuko macho", awakeSleepy:"Ana usingizi au amechanganyikiwa", awakeNotWaking:"Haamki",
+  breathingQuestion:"Anapumuaje?", breathingFine:"Anapumua vizuri", breathingDifficult:"Anapumua kwa kasi au kwa shida", breathingSevere:"Anahangaika kupumua",
+  drinkingQuestion:"Je, anaweza kunywa?", drinkingQuestionChild:"Je, anaweza kunywa au kunyonya?", drinkingYes:"Ndiyo", drinkingLittle:"Kidogo tu", drinkingNo:"Hapana",
+  durationQuestion:"Hii imeendelea kwa muda gani?", durationToday:"Imeanza leo", durationTwoDays:"Siku 1–2", durationLonger:"Zaidi ya hapo",
+  mainProblemQuestion:"Tatizo kuu ni nini sasa hivi?", mainBreathing:"Kupumua", mainFever:"Homa", mainInjury:"Jeraha au kutokwa na damu", mainStomach:"Tumbo au kutokula", mainOther:"Kitu kingine",
+  nextAction:"Hatua inayofuata", goNow:"Nenda sasa", getCareToday:"Pata matibabu leo", monitorAtHome:"Angalia nyumbani", needOneMore:"Nahitaji jibu moja zaidi",
+  goNowStatus:"Hii inaonekana ya dharura. Usisubiri.", getCareStatus:"Anapaswa kuonwa leo, si wiki ijayo.",
+  monitorStatus:"Kaa nyumbani kwa sasa, na uangalie dalili hizi.", needOneMoreStatus:"Swali moja lingefanya hili kuwa salama zaidi.",
+  prepareFacility:"Andaa kituo cha afya", createReferral:"Tengeneza rufaa", answerTheQuestion:"Jibu swali", whyThis:"Kwa nini hivi?", moreDetail:"Maelezo zaidi",
+  dangerNotWaking:"Haamki", dangerSeizure:"Kifafa au degedege", dangerNotBreathing:"Hapumui", dangerBlueLips:"Midomo ya bluu",
+  dangerHeavyBleeding:"Kutokwa na damu nyingi", dangerStrugglingBreathe:"Anahangaika kupumua", dangerChildNoDrink:"Mtoto hawezi kunywa",
+  watchNotWaking:"Haamki au ana usingizi mzito", watchBreathingHard:"Kupumua kunakuwa kugumu au kwa kasi", watchCannotDrink:"Hawezi kunywa", watchSeizureBleeding:"Kifafa au kutokwa na damu nyingi",
+  reasonSleepyHardBreathing:"Ana usingizi na anapumua kwa shida", reasonTooLittleKnown:"Kinachojulikana ni kidogo mno kuchagua kwa usalama",
+  reasonOneMoreSafer:"Swali moja zaidi lingefanya hili kuwa salama zaidi", reasonBreathingHarder:"Anapumua kwa shida kuliko kawaida",
+  reasonDrinkingLittle:"Anakunywa kidogo tu", reasonNotDrinking:"Hanywi", reasonSleepy:"Ana usingizi au ni vigumu kumwamsha",
+  reasonChildFever:"Mtoto mwenye homa", reasonInjurySeen:"Jeraha linalopaswa kuonwa", reasonBreathingMain:"Kupumua ndilo tatizo kuu",
+  reasonTooLongHome:"Imeendelea muda mrefu mno kuangalia nyumbani tu", reasonNoDanger:"Yuko macho, anakunywa, na kupumua hakuonyeshi dalili ya hatari",
+  missingWho:"Ni nani anayehusika haijabainika", missingWhoDetail:"Mtoto, mtu mzima, au wewe mwenyewe hubadilisha tunachouliza.",
+  missingWhat:"Kinachoendelea hakikuelezwa", missingAwake:"Kuwa macho na kuitika hakujulikani",
+  missingBreathing:"Hali ya kupumua haijulikani", missingDrinking:"Kama anaweza kunywa hakujulikani",
+  missingAskMoreDetail:"Kituo kiliuliza hili kabla ya kukubali.", askMoreCanWalk:"Je, anaweza kutembea hadi ndani ya kituo?",
+  referralEyebrow:"Rufaa", stageCreated:"Inaandaliwa", stageSent:"Imetumwa", stageReceived:"Imepokelewa", stageAccepted:"Imekubaliwa",
+  stagePatientMoving:"Mgonjwa safarini", stageArrived:"Amefika", stageSeen:"Anaonwa", stageCompleted:"Ziara imekamilika", stageOutcomeReturned:"Matokeo yamerejeshwa",
+  refCreatedHouseholdHeadline:"Kituo cha afya kinaandaliwa", refCreatedHouseholdStatus:"Hakuna kilichotumwa bado.",
+  refCreatedChpHeadline:"Rufaa imeandaliwa — haijatumwa bado", refCreatedChpStatus:"Iko tayari kwa {f}.",
+  refCreatedFacilityHeadline:"Rufaa ya jamii inaandaliwa", refCreatedFacilityStatus:"Bado haijafika kituo hiki.",
+  refSentHouseholdHeadline:"Rufaa yako iko njiani", refSentHouseholdStatus:"{f} bado haijajibu.",
+  refSentChpHeadline:"Rufaa imetumwa — inasubiri kituo", refSentChpStatus:"{f} bado haijakubali.",
+  refSentFacilityHeadline:"Rufaa mpya — bado haijakaguliwa", refSentFacilityStatus:"Amua kama kituo hiki kinaweza kumpokea.",
+  refReceivedHouseholdHeadline:"Kituo kimeona rufaa yako", refReceivedHouseholdStatus:"Bado hawajakubali. Kaa tayari.",
+  refReceivedChpHeadline:"Kituo kimepokea rufaa — bado haijakubaliwa", refReceivedChpStatus:"{f} inaamua sasa.",
+  refReceivedFacilityHeadline:"Rufaa imepokelewa — amua sasa", refReceivedFacilityStatus:"Kubali, elekeza kwingine, au uliza jambo moja linalokosekana.",
+  refAcceptedHouseholdHeadline:"Kituo kimekubali — unaweza kuondoka sasa", refAcceptedHouseholdStatus:"Nenda {f}.",
+  refAcceptedChpHeadline:"Rufaa imekubaliwa — safari ya mgonjwa haijathibitishwa", refAcceptedChpStatus:"{f} inasubiri waondoke.",
+  refAcceptedFacilityHeadline:"Rufaa inakuja", refAcceptedFacilityUrgentHeadline:"Rufaa ya dharura inakuja", refAcceptedFacilityStatus:"Jiandae kumpokea.",
+  refMovingHouseholdHeadline:"Uko njiani. Wanajua unakuja.", refMovingHouseholdStatus:"Waambie wewe ni rufaa ya Tunza katika {f}.",
+  refMovingChpHeadline:"Mgonjwa yuko safarini — kufika hakujathibitishwa", refMovingChpStatus:"{f} inamtarajia.",
+  refMovingFacilityHeadline:"Mgonjwa yuko njiani — jiandae kupokea", refMovingFacilityStatus:"Weka mahali pa kupokea tayari.",
+  refArrivedHouseholdHeadline:"Umefika. Waambie wewe ni rufaa ya Tunza.", refArrivedHouseholdStatus:"Kaa hadi wakuone.",
+  refArrivedChpHeadline:"Mgonjwa amefika — ziara bado haijafungwa", refArrivedChpStatus:"Yuko kituoni.",
+  refArrivedFacilityHeadline:"Mgonjwa yuko hapa — anza huduma", refArrivedFacilityStatus:"Mtu amefika.",
+  refSeenHouseholdHeadline:"Anaonwa sasa", refSeenHouseholdStatus:"Kaa hadi ziara ikamilike.",
+  refSeenChpHeadline:"Mgonjwa anaonwa — ziara bado haijafungwa", refSeenChpStatus:"Matokeo huja baada ya ziara kufungwa.",
+  refSeenFacilityHeadline:"Anahudumiwa — funga ziara ukimaliza", refSeenFacilityStatus:"Rekodi kilichotokea huduma ikiisha.",
+  refCompletedHouseholdHeadline:"Huduma imekamilika. Tunasubiri kusikia kilichotokea.", refCompletedHouseholdStatus:"Matokeo hayajarudi bado.",
+  refCompletedChpHeadline:"Ziara imekamilika — inasubiri matokeo", refCompletedChpStatus:"Ufuatiliaji unategemea kile kituo kitakachorejesha.",
+  refCompletedFacilityHeadline:"Ziara imekamilika — rejesha matokeo", refCompletedFacilityStatus:"Jamii inahitaji kujua kilichotokea.",
+  refOutcomeHouseholdHeadline:"Hiki ndicho kilichotokea, na cha kufanya sasa", refOutcomeHouseholdStatus:"Kituo kimerejesha matokeo.",
+  refOutcomeChpHeadline:"Matokeo yamerejeshwa — ufuatiliaji unaweza kuhitajika", refOutcomeChpStatus:"Kagua kama kaya hii inahitaji kutembelewa.",
+  refOutcomeFacilityHeadline:"Matokeo yametumwa kwa jamii", refOutcomeFacilityStatus:"Yamerejeshwa.",
+  refQueuedHouseholdHeadline:"Imehifadhiwa kwenye simu hii", refQueuedHouseholdStatus:"Huko mtandaoni. Rufaa itatumwa utakaporudi mtandaoni.",
+  refQueuedChpHeadline:"Rufaa imepangwa — nje ya mtandao", refQueuedChpStatus:"Iko kwenye kifaa hiki. Tuma muunganisho ukirudi.",
+  refNoResponseHeadline:"Kituo hakijajibu", refNoResponseHouseholdStatus:"Kaa mahali unapoweza kusafiri watakapojibu.",
+  refNoResponseOtherStatus:"Rufaa imetumwa — kituo hakijajibu.", refNoResponseFacilityStatus:"{f} haijajibu bado.",
+  actionSendNow:"Tuma sasa", actionSendFacility:"Tuma kwa kituo", actionSendReferral:"Tuma rufaa", actionAccept:"Kubali",
+  actionWeveLeft:"Tumeondoka", actionTheyLeft:"Wameondoka", actionWeveArrived:"Tumefika", actionTheyreHere:"Wamefika",
+  actionStartCare:"Anza huduma", actionCompleteVisit:"Kamilisha ziara", actionReturnOutcome:"Rejesha kilichotokea",
+  expectedArrivalTpl:"anatarajiwa kufika baada ya dakika {m}", travelTpl:"Safari ya dakika {m}",
+  failOfflineEyebrow:"Nje ya mtandao", failOfflineTitle:"Huko mtandaoni",
+  failOfflineBody:"Tathmini bado inafanya kazi kwenye simu hii. Kutuma rufaa kutasubiri hadi urudi mtandaoni.",
+  failNoResponseEyebrow:"Hakuna jibu", failNoResponseTitle:"Kituo hakijajibu",
+  failNoResponseBody:"Rufaa imetoka kwenye simu hii. Kituo hakijajibu. Kaa mahali unapoweza kusafiri watakapojibu.",
+  failRedirectedEyebrow:"Imeelekezwa kwingine", failRedirectedTitle:"Imeelekezwa kituo kingine",
+  failRedirectedBody:"Kituo hiki hakiwezi kumpokea. Kituo kingine sasa kiko kwenye rufaa.",
+  failStaleEyebrow:"Taarifa za zamani", failStaleTitle:"Taarifa hizi zinaweza kuwa za zamani",
+  failStaleBody:"Kipimo kilichorekodiwa ni cha zamani mno kuongoza uamuzi wa leo kama kipimo kipya.",
+  failIncompleteEyebrow:"Haijakamilika", failIncompleteTitle:"Tathmini hii haijakamilika",
+  failIncompleteBody:"Hakuna taarifa za kutosha kufanya uamuzi huu kwa usalama. Jibu moja zaidi linahitajika.",
+  failWeakEyebrow:"Muunganisho dhaifu", failWeakTitle:"Muunganisho ni dhaifu",
+  failWeakBody:"Hii inaweza kuchukua muda zaidi. Njia ya huduma inabaki kwenye simu hii hadi utumaji uthibitishwe.",
+  dangerEyebrow:"Dalili ya hatari", dangerTitle:"Usisubiri nyumbani na dalili hii.",
+  watchEyebrow:"Angalia", watchTitle:"Nenda sasa dalili hizi zikianza",
+  facilityEyebrow:"Kituo cha afya", facilityTravelTpl:"Dakika {m} kwa barabara ya kawaida",
+  facilityCanTake:"Kituo hiki kinaweza kumpokea", facilityWeCanHandle:"Tunaweza kushughulikia rufaa hii", facilityMayNot:"Huenda kituo hiki kisiweze kumpokea",
+  handoffEyebrow:"Makabidhiano",
+  whyComingUrgent:"{who} anahitaji huduma ya dharura. Dalili za hatari zilibainika katika tathmini ya jamii.",
+  whyComingToday:"{who} anapaswa kuonwa leo. Hii si hali ya kusubiri nyumbani.",
+  whyComingDefault:"{who} yuko kwenye rufaa ya Tunza.",
+  whoSubjectChild:"Mtoto kutoka kaya ya majaribio", whoSubjectSelf:"Mtu mzima (mwenyewe) kutoka kaya ya majaribio", whoSubjectOther:"Mtu kutoka kaya ya majaribio",
+  handoffWho:"Nani", handoffDescribed:"Walichoeleza", handoffAwake:"Macho", handoffBreathing:"Kupumua",
+  handoffDrinking:"Kunywa", handoffDuration:"Muda gani", handoffTemp:"Joto la mwili (jaribio)",
+  handoffPhotoOnly:"Picha pekee (jaribio)", handoffNotDescribed:"Hakikuelezwa", handoffStillMissing:"Bado zinakosekana",
+  whoValueSelf:"Mtu mzima (mwenyewe) · kaya ya majaribio", whoValueAdult:"Mtu mzima · kaya ya majaribio", whoValueChild:"Mtoto · kaya ya majaribio", whoValueUnknown:"Hajabainishwa · kaya ya majaribio",
+  unknownValue:"Haijulikani", freshnessAssessedTpl:"ilitathminiwa dakika {m} zilizopita", freshnessOld:"ilirekodiwa miezi 8 iliyopita",
+  outcomeQuestion:"Nini kilitokea?", outcomeTreated:"Alionwa na kutibiwa", outcomeHigher:"Alihitaji kituo cha ngazi ya juu", outcomeNoShow:"Hakufika", outcomeUnknown:"Matokeo hayajulikani",
+  startEncounter:"Anza tathmini", noEncounter:"Hakuna tathmini inayoendelea", noEncounterDetail:"Anza moja kunasa kinachoendelea, kisha uamue.",
+  noIncoming:"Hakuna rufaa inayokuja", noIncomingDetail:"Kaya au CHP akituma rufaa, itaonekana hapa.",
+  otherActions:"Vitendo vingine", redirect:"Elekeza kwingine", askMore:"Uliza zaidi",
+  needsAttention:"Inahitaji umakini", needsAction:"Inahitaji hatua", missingInformation:"Taarifa zinazokosekana",
+  whoNeedsFollowUp:"Nani anahitaji ufuatiliaji", nothingWaiting:"Hakuna kinachosubiri", encounterTitle:"Tathmini", incomingTitle:"Zinazoingia",
+  fuWatchHome:"Kaya ya majaribio — angalia dalili za hatari", fuWatchHomeDetail:"Walishauriwa kubaki nyumbani. Hakikisha bado anaweza kunywa na kuamka.",
+  fuConfirmTravel:"Safari haijathibitishwa", fuConfirmTravelDetail:"Kituo kimekubali. Thibitisha kama kaya imeondoka.",
+  fuPostOutcome:"Kaya ya majaribio — fuatilia baada ya huduma", fuPostOutcomeDetail:"Thibitisha wanapata nafuu nyumbani.",
+  viewingAs:"Unaangalia kama", roleHousehold:"Kaya", roleChp:"CHP", roleFacility:"Kituo",
+  demoLabel:"Demo", namedConditions:"Hali zilizotajwa", startOver:"Anza upya",
+  languageButton:"English",
+  disclaimer:"Si mbadala wa huduma za dharura au matibabu ya kitaalamu."
+}
+};
+const t = (k) => (COPY[state.locale][k] ?? COPY.en[k] ?? k);
+const fill = (s, vars) => s.replace(/\{(\w+)\}/g, (m, n) => (n in vars ? String(vars[n]) : m));
+const esc = (s) => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+
+/* ---------- demo facilities ---------- */
+const FACILITIES = [
+  { id:"north-demo", name:"North Demo Health Centre", travelMinutes:42, canHandleUrgent:true, services:["Urgent care","Under-5","Observation"] },
+  { id:"west-demo",  name:"West Demo Sub-County Hospital", travelMinutes:70, canHandleUrgent:true, services:["Emergency","Theatre","Maternity"] },
+];
+const facilityById = (id) => FACILITIES.find(f => f.id === id) || FACILITIES[0];
+const pickFacility = (urgent) => urgent ? (FACILITIES.find(f => f.canHandleUrgent) || FACILITIES[0]) : FACILITIES[0];
+const redirectFacility = (id) => FACILITIES.find(f => f.id !== id) || FACILITIES[1];
+
+/* ---------- assessment engine (demo rules, not clinically validated) ---------- */
+const EMPTY_ANSWERS = { who:null, presentation:"", photoAttached:false, awake:null, breathing:null, drinking:null, duration:null, mainProblem:null };
+const DANGER_PATTERNS = [
+  { re:/unconscious|not waking|won'?t wake|hajitambui|haamki/, key:"dangerNotWaking" },
+  { re:/seizure|convulsion|fitting|kifafa|degedege/, key:"dangerSeizure" },
+  { re:/not breathing|stopped breathing|hapumui/, key:"dangerNotBreathing" },
+  { re:/blue lips|blue face|midomo ya bluu/, key:"dangerBlueLips" },
+  { re:/bleeding (a lot|heavily|won'?t stop)|heavy bleeding|damu nyingi/, key:"dangerHeavyBleeding" },
+];
+const WATCH_KEYS = ["watchNotWaking","watchBreathingHard","watchCannotDrink","watchSeizureBleeding"];
+const presentationDangerSigns = (text) => { const l = text.toLowerCase(); return DANGER_PATTERNS.filter(p => p.re.test(l)).map(p => p.key); };
+const hasFever = (text) => /fever|hot body|temperature|homa/.test(text.toLowerCase());
+const hasInjury = (text) => /wound|cut|bleed|injury|burn|fall|jeraha|ajali|damu/.test(text.toLowerCase());
+const tooIncomplete = (a) => {
+  const unknowns = [a.awake, a.breathing, a.drinking].filter(v => v === "unknown" || v === null).length;
+  return unknowns >= 2 && a.presentation.trim().length === 0 && !a.photoAttached;
+};
+const confidentHomeWatch = (a) => a.awake === "alert" && a.breathing === "fine" && a.drinking === "yes";
+
+function decide(a) {
+  const danger = [...presentationDangerSigns(a.presentation)];
+  const reasons = [];
+  if (a.awake === "not_waking") danger.push("dangerNotWaking");
+  if (a.breathing === "severe") danger.push("dangerStrugglingBreathe");
+  if (a.drinking === "no" && a.who === "child") danger.push("dangerChildNoDrink");
+  if (a.mainProblem === "injury" && hasInjury(a.presentation) && /heavy|won'?t stop|a lot|nyingi/.test(a.presentation.toLowerCase())) danger.push("dangerHeavyBleeding");
+  const uniq = [...new Set(danger)];
+  const D = (kind, reasonKeys) => ({ kind, reasonKeys, dangerSignKeys: uniq, watchSignKeys: WATCH_KEYS });
+  if (uniq.length > 0) return D("go_now", uniq);
+  if (a.breathing === "difficult" && a.awake === "sleepy") return D("go_now", ["reasonSleepyHardBreathing"]);
+  if (tooIncomplete(a) && a.mainProblem !== null) return D("need_one_more_answer", ["reasonTooLittleKnown"]);
+  if (tooIncomplete(a) && a.duration !== null) return D("need_one_more_answer", ["reasonOneMoreSafer"]);
+  let kind = "monitor_at_home";
+  if (a.breathing === "difficult") { kind = "get_care_today"; reasons.push("reasonBreathingHarder"); }
+  if (a.drinking === "little") { kind = "get_care_today"; reasons.push("reasonDrinkingLittle"); }
+  if (a.drinking === "no") { kind = "get_care_today"; reasons.push("reasonNotDrinking"); }
+  if (a.awake === "sleepy") { kind = "get_care_today"; reasons.push("reasonSleepy"); }
+  if (a.who === "child" && hasFever(a.presentation)) { kind = "get_care_today"; reasons.push("reasonChildFever"); }
+  if (a.mainProblem === "fever" && a.who === "child") { kind = "get_care_today"; reasons.push("reasonChildFever"); }
+  if (a.mainProblem === "injury") { kind = "get_care_today"; reasons.push("reasonInjurySeen"); }
+  if (a.mainProblem === "breathing") { kind = "get_care_today"; reasons.push("reasonBreathingMain"); }
+  if (a.duration === "longer" && (hasFever(a.presentation) || a.mainProblem === "fever")) { kind = "get_care_today"; reasons.push("reasonTooLongHome"); }
+  if (kind === "monitor_at_home") {
+    if (!confidentHomeWatch(a) && a.mainProblem === null) return D("need_one_more_answer", ["reasonOneMoreSafer"]);
+    if (!confidentHomeWatch(a) && tooIncomplete(a)) return D("need_one_more_answer", ["reasonTooLittleKnown"]);
+    reasons.push("reasonNoDanger");
+  }
+  return D(kind, [...new Set(reasons)]);
+}
+function shouldStop(a, last) {
+  if (last === "what" && decide(a).kind === "go_now") return true;
+  if (last === "awake" && a.awake === "not_waking") return true;
+  if (last === "breathing" && a.breathing === "severe") return true;
+  if (last === "drinking" && a.drinking === "no" && a.who === "child") return true;
+  return last === "duration" || last === "main_problem";
+}
+function nextQuestion(a, last) {
+  if (shouldStop(a, last)) return null;
+  return { who:"what", what:"awake", awake:"breathing", breathing:"drinking", drinking:"duration", duration:"main_problem", main_problem:null }[last];
+}
+function applyAnswer(a, q, v) {
+  const n = { ...a };
+  if (q === "who") n.who = v; else if (q === "what") n.presentation = v;
+  else if (q === "awake") n.awake = v; else if (q === "breathing") n.breathing = v;
+  else if (q === "drinking") n.drinking = v; else if (q === "duration") n.duration = v;
+  else if (q === "main_problem") n.mainProblem = v;
+  return n;
+}
+function questionContent(id, who) {
+  const C = (i, l) => ({ id:i, label:t(l) });
+  switch (id) {
+    case "who": return { question:t("whoQuestion"), choices:[C("self","whoSelf"),C("household_adult","whoAdult"),C("child","whoChild")] };
+    case "what": return { question:t("whatQuestion"), hint:t("whatHint"), choices:[] };
+    case "awake": return { question:t("awakeQuestion"), choices:[C("alert","awakeAlert"),C("sleepy","awakeSleepy"),C("not_waking","awakeNotWaking")] };
+    case "breathing": return { question:t("breathingQuestion"), choices:[C("fine","breathingFine"),C("difficult","breathingDifficult"),C("severe","breathingSevere")] };
+    case "drinking": return { question: who === "child" ? t("drinkingQuestionChild") : t("drinkingQuestion"), choices:[C("yes","drinkingYes"),C("little","drinkingLittle"),C("no","drinkingNo")] };
+    case "duration": return { question:t("durationQuestion"), choices:[C("today","durationToday"),C("two_days","durationTwoDays"),C("longer","durationLonger")] };
+    case "main_problem": return { question:t("mainProblemQuestion"), choices:[C("breathing","mainBreathing"),C("fever","mainFever"),C("injury","mainInjury"),C("stomach","mainStomach"),C("other","mainOther")] };
+  }
+}
+function missingInfo(a, askMore) {
+  const items = [];
+  if (!a.who || a.who === "unknown") items.push({ id:"who", label:t("missingWho"), detail:t("missingWhoDetail") });
+  if (!a.presentation.trim() && !a.photoAttached) items.push({ id:"what", label:t("missingWhat") });
+  if (!a.awake || a.awake === "unknown") items.push({ id:"awake", label:t("missingAwake") });
+  if (!a.breathing || a.breathing === "unknown") items.push({ id:"breathing", label:t("missingBreathing") });
+  if (!a.drinking || a.drinking === "unknown") items.push({ id:"drinking", label:t("missingDrinking") });
+  if (askMore === "can_walk") items.push({ id:"ask-more", label:t("askMoreCanWalk"), detail:t("missingAskMoreDetail") });
+  return items;
+}
+const decisionHeadline = (k) => ({ go_now:t("goNow"), get_care_today:t("getCareToday"), monitor_at_home:t("monitorAtHome"), need_one_more_answer:t("needOneMore") })[k];
+const decisionStatus = (k) => ({ go_now:t("goNowStatus"), get_care_today:t("getCareStatus"), monitor_at_home:t("monitorStatus"), need_one_more_answer:t("needOneMoreStatus") })[k];
+
+/* ---------- referral machine: the canonical lifecycle ---------- */
+const STAGE_LABEL = { created:"stageCreated", sent:"stageSent", received:"stageReceived", accepted:"stageAccepted",
+  patient_moving:"stagePatientMoving", arrived:"stageArrived", seen:"stageSeen", completed:"stageCompleted", outcome_returned:"stageOutcomeReturned" };
+const OUTCOME_LABEL = { treated:"outcomeTreated", referred_onward:"outcomeHigher", did_not_arrive:"outcomeNoShow", unknown:"outcomeUnknown" };
+
+function createReferral(urgent) {
+  const f = pickFacility(urgent);
+  return { stage:"created", facilityId:f.id, expectedArrivalMinutes:f.travelMinutes, queued:false, failure:null, askMore:null, outcome:null };
+}
+function applyReferralAction(r, action, opts) {
+  if (action === "send" && opts.offline) return { ...r, queued:true, failure:"offline" };
+  if (action === "send" && opts.noFacilityResponse) return { ...r, stage:"sent", queued:false, failure:"no_facility_response" };
+  if (action === "send") return { ...r, stage:"sent", queued:false, failure: opts.weakConnection ? "weak_connection" : null };
+  if (action === "redirect") { const f = redirectFacility(r.facilityId); return { ...r, stage:"sent", facilityId:f.id, expectedArrivalMinutes:f.travelMinutes, failure:"redirected", askMore:null }; }
+  if (action === "ask_more") return { ...r, stage:"received", askMore:"can_walk" };
+  if (action === "accept") return { ...r, stage:"accepted", queued:false, failure: r.failure === "no_facility_response" ? null : r.failure };
+  if (action === "return_outcome") return { ...r, stage:"outcome_returned", outcome: opts.outcome || "treated" };
+  const after = { travel:"patient_moving", arrive:"arrived", start_care:"seen", complete:"completed" }[action];
+  return after ? { ...r, stage: after } : r;
+}
+function describeReferral(role, r, decisionKind) {
+  const f = facilityById(r.facilityId).name;
+  const urgent = decisionKind === "go_now";
+  const m = r.expectedArrivalMinutes;
+  const V = (h, s, action, mins) => ({
+    stageLabel: t(STAGE_LABEL[r.stage]),
+    headline: fill(t(h), { f }), status: fill(t(s), { f }),
+    action: action ? { id: action[0], label: t(action[1]) } : null,
+    arrivalMinutes: mins ?? null,
+  });
+  if (r.queued || r.failure === "offline") {
+    if (role === "household") return V("refQueuedHouseholdHeadline","refQueuedHouseholdStatus",["send","actionSendFacility"]);
+    if (role === "chp") return V("refQueuedChpHeadline","refQueuedChpStatus",["send","actionSendReferral"]);
+  }
+  if (r.failure === "no_facility_response" && r.stage === "sent") {
+    if (role === "facility") return V("refSentFacilityHeadline","refNoResponseFacilityStatus",["accept","actionAccept"]);
+    if (role === "household") return V("refNoResponseHeadline","refNoResponseHouseholdStatus",null);
+    return V("refNoResponseHeadline","refNoResponseOtherStatus",null);
+  }
+  switch (r.stage) {
+    case "created":
+      if (role === "household") return V("refCreatedHouseholdHeadline","refCreatedHouseholdStatus",["send", urgent ? "actionSendNow" : "actionSendFacility"]);
+      if (role === "chp") return V("refCreatedChpHeadline","refCreatedChpStatus",["send","actionSendReferral"]);
+      return V("refCreatedFacilityHeadline","refCreatedFacilityStatus",null);
+    case "sent":
+      if (role === "household") return V("refSentHouseholdHeadline","refSentHouseholdStatus",null);
+      if (role === "chp") return V("refSentChpHeadline","refSentChpStatus",null);
+      return V("refSentFacilityHeadline","refSentFacilityStatus",["accept","actionAccept"]);
+    case "received":
+      if (role === "household") return V("refReceivedHouseholdHeadline","refReceivedHouseholdStatus",null);
+      if (role === "chp") return V("refReceivedChpHeadline","refReceivedChpStatus",null);
+      return V("refReceivedFacilityHeadline","refReceivedFacilityStatus",["accept","actionAccept"]);
+    case "accepted":
+      if (role === "household") return V("refAcceptedHouseholdHeadline","refAcceptedHouseholdStatus",["travel","actionWeveLeft"], m);
+      if (role === "chp") return V("refAcceptedChpHeadline","refAcceptedChpStatus",["travel","actionTheyLeft"], m);
+      return V(urgent ? "refAcceptedFacilityUrgentHeadline" : "refAcceptedFacilityHeadline","refAcceptedFacilityStatus",null, m);
+    case "patient_moving":
+      if (role === "household") return V("refMovingHouseholdHeadline","refMovingHouseholdStatus",["arrive","actionWeveArrived"], m);
+      if (role === "chp") return V("refMovingChpHeadline","refMovingChpStatus",null, m);
+      return V("refMovingFacilityHeadline","refMovingFacilityStatus",["arrive","actionTheyreHere"], m);
+    case "arrived":
+      if (role === "household") return V("refArrivedHouseholdHeadline","refArrivedHouseholdStatus",null);
+      if (role === "chp") return V("refArrivedChpHeadline","refArrivedChpStatus",null);
+      return V("refArrivedFacilityHeadline","refArrivedFacilityStatus",["start_care","actionStartCare"]);
+    case "seen":
+      if (role === "household") return V("refSeenHouseholdHeadline","refSeenHouseholdStatus",null);
+      if (role === "chp") return V("refSeenChpHeadline","refSeenChpStatus",null);
+      return V("refSeenFacilityHeadline","refSeenFacilityStatus",["complete","actionCompleteVisit"]);
+    case "completed":
+      if (role === "household") return V("refCompletedHouseholdHeadline","refCompletedHouseholdStatus",null);
+      if (role === "chp") return V("refCompletedChpHeadline","refCompletedChpStatus",null);
+      return V("refCompletedFacilityHeadline","refCompletedFacilityStatus",["return_outcome","actionReturnOutcome"]);
+    case "outcome_returned": {
+      const outcome = r.outcome ? t(OUTCOME_LABEL[r.outcome]) : null;
+      let v;
+      if (role === "household") v = V("refOutcomeHouseholdHeadline","refOutcomeHouseholdStatus",null);
+      else if (role === "chp") v = V("refOutcomeChpHeadline","refOutcomeChpStatus",null);
+      else v = V("refOutcomeFacilityHeadline","refOutcomeFacilityStatus",null);
+      if (outcome) v.status = outcome;
+      return v;
+    }
+  }
+}
+function followUpItems(role, r, decisionKind) {
+  if (role !== "chp") return [];
+  if (decisionKind === "monitor_at_home" && !r) return [{ id:"watch-home", label:t("fuWatchHome"), detail:t("fuWatchHomeDetail") }];
+  if (r && r.stage === "accepted") return [{ id:"confirm-travel", label:t("fuConfirmTravel"), detail:t("fuConfirmTravelDetail") }];
+  if (r && r.stage === "outcome_returned") return [{ id:"post-outcome", label:t("fuPostOutcome"), detail: r.outcome ? t(OUTCOME_LABEL[r.outcome]) : t("fuPostOutcomeDetail") }];
+  return [];
+}
+function warningCopy(named) {
+  const M = {
+    offline:["failOfflineEyebrow","failOfflineTitle","failOfflineBody"],
+    no_facility_response:["failNoResponseEyebrow","failNoResponseTitle","failNoResponseBody"],
+    redirected:["failRedirectedEyebrow","failRedirectedTitle","failRedirectedBody"],
+    stale_information:["failStaleEyebrow","failStaleTitle","failStaleBody"],
+    incomplete_assessment:["failIncompleteEyebrow","failIncompleteTitle","failIncompleteBody"],
+    weak_connection:["failWeakEyebrow","failWeakTitle","failWeakBody"],
+    danger_sign:["dangerEyebrow","dangerTitle",null],
+    watch_sign:["watchEyebrow","watchTitle",null],
+  }[named];
+  return { eyebrow:t(M[0]), title:t(M[1]), body: M[2] ? t(M[2]) : "" };
+}
+
+/* ---------- state ---------- */
+const FAILURES = ["offline","no_facility_response","redirected","stale_information","incomplete_assessment","weak_connection"];
+const KEY = "tunza.proto1";
+const newEncounter = () => ({ answers:{ ...EMPTY_ANSWERS }, asked:[], currentQuestion:"who", decision:null, assessedAt: Date.now() });
+let state = { role:"household", locale:"en", view:"home", injectedFailures:[], encounter:newEncounter(), referral:null, online:true };
+const ui = { demoOpen:false, whyOpen:false, moreOpen:false, otherOpen:false, missingOpen:false, entryMode:"type", listening:false, speakMessage:null };
+try {
+  const raw = localStorage.getItem(KEY);
+  if (raw) { const p = JSON.parse(raw); if (p && p.role && p.encounter) state = { ...state, ...p, view: p.view || "home" }; }
+} catch (e) { /* storage unavailable: run in memory */ }
+state.online = typeof navigator === "undefined" || navigator.onLine !== false;
+// A fresh page load ALWAYS opens at the front door — the red home screen,
+// in English — whatever role, screen, or language was open last time. The
+// language toggle still switches live; any saved care path stays reachable
+// through the Continue card.
+state.role = "household";
+state.view = "home";
+state.locale = "en";
+function persist() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) { /* memory only */ } }
+const isOffline = () => !state.online || state.injectedFailures.includes("offline");
+function activeFailures() {
+  const named = new Set();
+  if (isOffline()) named.add("offline");
+  if (state.injectedFailures.includes("weak_connection")) named.add("weak_connection");
+  if (state.injectedFailures.includes("stale_information")) named.add("stale_information");
+  if (state.referral && state.referral.failure === "no_facility_response") named.add("no_facility_response");
+  if (state.referral && state.referral.failure === "redirected") named.add("redirected");
+  if ((state.encounter && state.encounter.decision && state.encounter.decision.kind === "need_one_more_answer") || state.injectedFailures.includes("incomplete_assessment")) named.add("incomplete_assessment");
+  return [...named];
+}
+
+/* ---------- actions ---------- */
+const act = {
+  setRole(role) { state.role = role; render(); },
+  setLocale(l) { state.locale = l; document.documentElement.lang = l; render(); },
+  setView(v) { state.view = v; render(); },
+  toggleFailure(f) {
+    const has = state.injectedFailures.includes(f);
+    state.injectedFailures = has ? state.injectedFailures.filter(x => x !== f) : [...state.injectedFailures, f];
+    const r = state.referral;
+    if (f === "no_facility_response" && !has && r && r.stage === "sent") state.referral = { ...r, failure:"no_facility_response" };
+    if (f === "no_facility_response" && has && r && r.failure === "no_facility_response") state.referral = { ...r, failure:null };
+    if (f === "redirected" && !has && r) state.referral = applyReferralAction(r, "redirect", {});
+    render();
+  },
+  answer(q, v) {
+    const e = state.encounter; if (!e || e.currentQuestion !== q) return;
+    const answers = applyAnswer(e.answers, q, v);
+    const asked = e.asked.includes(q) ? e.asked : [...e.asked, q];
+    const upcoming = nextQuestion(answers, q);
+    state.encounter = { ...e, answers, asked, currentQuestion: upcoming, decision: upcoming ? null : decide(answers), assessedAt: Date.now() };
+    render();
+  },
+  setPresentation(text) { if (state.encounter) state.encounter.answers.presentation = text; persist(); },
+  setPhoto(on) { if (state.encounter) { state.encounter.answers.photoAttached = on; render(); } },
+  prepareReferral() {
+    const d = state.encounter && state.encounter.decision;
+    if (!d || state.referral || (d.kind !== "go_now" && d.kind !== "get_care_today")) return;
+    state.referral = createReferral(d.kind === "go_now");
+    render();
+  },
+  referral(action, outcome) {
+    if (!state.referral) return;
+    state.referral = applyReferralAction(state.referral, action, {
+      offline: isOffline(),
+      noFacilityResponse: state.injectedFailures.includes("no_facility_response"),
+      weakConnection: state.injectedFailures.includes("weak_connection"),
+      outcome,
+    });
+    render();
+  },
+  goBack() {
+    const e = state.encounter; if (!e || state.referral) return;
+    if (e.decision && e.asked.length > 0) { state.encounter = { ...e, currentQuestion: e.asked[e.asked.length - 1], decision:null }; }
+    else if (e.asked.length > 0) { state.encounter = { ...e, asked: e.asked.slice(0, -1), currentQuestion: e.asked[e.asked.length - 1], decision:null }; }
+    render();
+  },
+  continueForOneMore() {
+    const e = state.encounter;
+    if (!e || !e.decision || state.referral || e.decision.kind !== "need_one_more_answer" || e.asked.includes("main_problem")) return;
+    state.encounter = { ...e, currentQuestion:"main_problem", decision:null };
+    render();
+  },
+  reset() { state.injectedFailures = []; state.referral = null; state.encounter = newEncounter(); state.view = "home"; ui.entryMode = "type"; render(); },
+};
+
+/* ---------- speech (degrades by design) ---------- */
+let recognition = null;
+function toggleSpeak() {
+  const Ctor = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!Ctor) { ui.speakMessage = t("speakUnavailable"); ui.entryMode = "type"; render(); return; }
+  if (ui.listening) {
+    ui.stopRequested = true;
+    try { recognition && recognition.stop(); } catch (e) {}
+    ui.listening = false; render(); return;
+  }
+  try {
+    recognition = new Ctor();
+    recognition.lang = state.locale === "sw" ? "sw-KE" : "en-KE";
+    recognition.interimResults = false; recognition.continuous = false;
+    ui.stopRequested = false;
+    let gotText = false;
+    recognition.onresult = (ev) => {
+      const text = ev.results[0] && ev.results[0][0] && ev.results[0][0].transcript;
+      if (text && state.encounter) {
+        gotText = true;
+        const cur = state.encounter.answers.presentation;
+        state.encounter.answers.presentation = cur ? cur + " " + text : text;
+      }
+    };
+    // Ending with nothing captured (and not stopped by the user) is a failure:
+    // say so where the person will see it, and hand them the keyboard.
+    recognition.onend = () => {
+      ui.listening = false;
+      if (!gotText && !ui.stopRequested) {
+        ui.speakMessage = t("speakUnavailable");
+        ui.entryMode = "type";
+      }
+      render();
+    };
+    recognition.onerror = () => {
+      ui.listening = false;
+      ui.speakMessage = t("speakUnavailable");
+      ui.entryMode = "type";
+      render();
+    };
+    ui.speakMessage = null; ui.listening = true; recognition.start(); render();
+  } catch (e) { ui.listening = false; ui.speakMessage = t("speakUnavailable"); render(); }
+}
+
+/* ---------- render helpers ---------- */
+const warningHtml = (named, over) => {
+  const c = warningCopy(named);
+  const body = over !== undefined ? over : c.body;
+  return `<aside class="warning tone-${named}" role="status">
+    <p class="eyebrow">${esc(c.eyebrow)}</p>
+    <p class="t">${esc(c.title)}</p>
+    ${body ? `<p class="b">${esc(body)}</p>` : ""}
+  </aside>`;
+};
+const tplNum = (tpl, n) => { const [a, b] = tpl.split("{m}"); return `${esc(a)}<span class="num">${n}</span>${esc(b || "")}`; };
+const disclosure = (key, label, inner) => `
+  <div class="disclosure ${ui[key] ? "open" : ""}">
+    <button data-ui="${key}" aria-expanded="${!!ui[key]}">${esc(label)}</button>
+    ${ui[key] ? `<div class="inner">${inner}</div>` : ""}
+  </div>`;
+
+function facilityCardHtml(role, decisionKind) {
+  const r = state.referral; if (!r) return "";
+  const f = facilityById(r.facilityId);
+  const canHandle = decisionKind !== "go_now" || f.canHandleUrgent;
+  const status = canHandle ? (role === "facility" ? t("facilityWeCanHandle") : t("facilityCanTake")) : t("facilityMayNot");
+  return `<article class="card">
+    <p class="eyebrow">${esc(t("facilityEyebrow"))}</p>
+    <h2 class="heading w600" style="margin-top:0.25rem">${esc(f.name)}</h2>
+    <p class="body w500 soft" style="margin-top:0.5rem">${tplNum(t("facilityTravelTpl"), f.travelMinutes)}</p>
+    <p class="body w600" style="margin-top:0.5rem; color:${canHandle ? "var(--ink)" : "var(--urgent)"}">${esc(status)}</p>
+    <p class="label soft" style="margin-top:0.5rem">${esc(f.services.join(" · "))}</p>
+  </article>`;
+}
+function handoffHtml(decisionKind) {
+  const e = state.encounter; if (!e) return "";
+  const a = e.answers;
+  const stale = activeFailures().includes("stale_information");
+  const whoSubject = a.who === "child" ? t("whoSubjectChild") : a.who === "self" ? t("whoSubjectSelf") : t("whoSubjectOther");
+  const whyKey = decisionKind === "go_now" ? "whyComingUrgent" : decisionKind === "get_care_today" ? "whyComingToday" : "whyComingDefault";
+  const why = fill(t(whyKey), { who: whoSubject });
+  const label = (v, map) => (v && map[v]) ? t(map[v]) : t("unknownValue");
+  const mins = Math.max(1, Math.round((Date.now() - (e.assessedAt || Date.now())) / 60000));
+  const freshness = stale ? esc(t("freshnessOld")) : tplNum(t("freshnessAssessedTpl"), mins);
+  const whoVal = { self:"whoValueSelf", household_adult:"whoValueAdult", child:"whoValueChild" }[a.who] || "whoValueUnknown";
+  const facts = [
+    [t("handoffWho"), esc(t(whoVal))],
+    [t("handoffDescribed"), esc(a.presentation.trim() || (a.photoAttached ? t("handoffPhotoOnly") : t("handoffNotDescribed")))],
+    [t("handoffAwake"), esc(label(a.awake, { alert:"awakeAlert", sleepy:"awakeSleepy", not_waking:"awakeNotWaking" }))],
+    [t("handoffBreathing"), esc(label(a.breathing, { fine:"breathingFine", difficult:"breathingDifficult", severe:"breathingSevere" }))],
+    [t("handoffDrinking"), esc(label(a.drinking, { yes:"drinkingYes", little:"drinkingLittle", no:"drinkingNo" }))],
+    [t("handoffDuration"), esc(label(a.duration, { today:"durationToday", two_days:"durationTwoDays", longer:"durationLonger" }))],
+  ];
+  const missing = missingInfo(a, state.referral ? state.referral.askMore : null).map(i => i.label);
+  return `<section class="card">
+    <p class="eyebrow">${esc(t("handoffEyebrow"))}</p>
+    <h2 class="heading w600" style="margin-top:0.25rem">${esc(why)}</h2>
+    <dl class="facts">
+      ${facts.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${v}</dd></div>`).join("")}
+      <div><dt>${esc(t("handoffTemp"))}</dt><dd><span class="num">38.6 C</span></dd>
+        <p class="freshness ${stale ? "stale" : ""}"><span class="num">${freshness}</span></p></div>
+    </dl>
+    ${missing.length ? `<div class="divider"><p class="field-label">${esc(t("handoffStillMissing"))}</p>
+      <ul class="plain" style="gap:0.25rem; margin-top:0.25rem">${missing.map(m => `<li class="label w600">${esc(m)}</li>`).join("")}</ul></div>` : ""}
+  </section>`;
+}
+function attentionHtml(title, items, emptyLabel, action) {
+  if (!items.length && !emptyLabel && !action) return "";
+  return `<section class="card">
+    ${title ? `<h2 class="eyebrow">${esc(title)}</h2>` : ""}
+    ${items.length === 0 && emptyLabel
+      ? `<p class="body w600" style="margin-top:0.5rem">${esc(emptyLabel)}</p>`
+      : `<ul class="plain">${items.map(i => `<li><p class="item-label">${esc(i.label)}</p>${i.detail ? `<p class="item-detail">${esc(i.detail)}</p>` : ""}</li>`).join("")}</ul>`}
+    ${action ? `<button class="primary" style="margin-top:1rem; min-height:3rem" data-act="${action.act}">${esc(action.label)}</button>` : ""}
+  </section>`;
+}
+
+/* ---------- screens ---------- */
+function assessmentFlowHtml() {
+  const e = state.encounter;
+  const q = e && e.currentQuestion; if (!e || !q) return "";
+  const content = questionContent(q, e.answers.who);
+  const canGoBack = e.asked.length > 0 || !!e.decision;
+  const fails = activeFailures().filter(n => n === "offline" || n === "weak_connection" || n === "incomplete_assessment");
+  let entry = "";
+  if (q === "what") {
+    const modes = [["speak", t("modeSpeak")],["type", t("modeType")],["photo", t("modePhoto")]];
+    const text = e.answers.presentation;
+    const speakAvail = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+    let pane = "";
+    if (ui.entryMode === "speak") {
+      pane = `<div class="stack3">
+        <button class="speak-box" data-act="speak">${esc(ui.listening ? t("listening") : speakAvail ? t("tapToSpeak") : t("speakNotAvailable"))}</button>
+        ${text ? `<p class="transcript">${esc(text)}</p>` : ""}
+      </div>`;
+    } else if (ui.entryMode === "photo") {
+      pane = `<div class="stack3">
+        <label class="photo-label">${esc(e.answers.photoAttached ? t("photoAttachedDemo") : t("photoTake"))}
+          <input type="file" accept="image/*" capture="environment" data-input="photo"></label>
+        ${e.answers.photoAttached
+          ? `<button class="link-btn" data-act="photo-remove">${esc(t("photoRemove"))}</button>`
+          : `<p class="label soft">${esc(t("photoHint"))}</p>`}
+        <label class="stack2"><span class="field-label">${esc(t("addNote"))}</span>
+          <textarea rows="2" data-input="presentation">${esc(text)}</textarea></label>
+      </div>`;
+    } else {
+      pane = `<label class="stack2"><span class="field-label">${esc(t("typeWhatYouSee"))}</span>
+        <textarea rows="4" placeholder="${esc(t("whatPlaceholder"))}" data-input="presentation">${esc(text)}</textarea></label>`;
+    }
+    const disabled = text.trim().length === 0 && !e.answers.photoAttached;
+    entry = `<div class="stack3">
+      <div class="tabs" role="tablist" aria-label="${esc(t("entryAria"))}">
+        ${modes.map(([id, label]) => `<button role="tab" aria-selected="${ui.entryMode === id}" data-mode="${id}">${esc(label)}</button>`).join("")}
+      </div>
+      ${ui.speakMessage ? `<p class="label soft" role="status">${esc(ui.speakMessage)}</p>` : ""}
+      ${pane}
+    </div>
+    <button class="primary" data-act="continue-what" ${disabled ? "disabled" : ""}>${esc(t("whatContinue"))}</button>`;
+  }
+  return `<div class="stack4">
+    ${fails.map(n => warningHtml(n)).join("")}
+    ${canGoBack ? `<button class="back-btn" data-act="back">${esc(t("back"))}</button>` : ""}
+    <section class="stack5">
+      <header class="stack2">
+        <h1 class="q">${esc(content.question)}</h1>
+        ${content.hint ? `<p class="body soft">${esc(content.hint)}</p>` : ""}
+      </header>
+      ${entry}
+      ${content.choices.length ? `<div class="stack2" role="group" aria-label="${esc(content.question)}">
+        ${content.choices.map(c => `<button class="choice" data-answer="${c.id}">${esc(c.label)}</button>`).join("")}
+      </div>` : ""}
+      <button class="dont-know" data-act="dont-know">${esc(q === "who" ? t("whoUnknown") : t("dontKnow"))}</button>
+    </section>
+  </div>`;
+}
+function decisionHtml(forChp) {
+  const e = state.encounter; const d = e && e.decision; if (!d) return "";
+  const fails = activeFailures();
+  const askedMain = e.asked.includes("main_problem");
+  let action = null;
+  if (d.kind === "go_now" || d.kind === "get_care_today")
+    action = { act:"prepare", label: forChp ? t("createReferral") : t("prepareFacility") };
+  else if (d.kind === "need_one_more_answer" && !askedMain)
+    action = { act:"one-more", label: t("answerTheQuestion") };
+  const why = d.reasonKeys.map(k => t(k));
+  const inner = `
+    ${fails.includes("incomplete_assessment") ? warningHtml("incomplete_assessment") : ""}
+    ${!forChp && fails.includes("offline") ? warningHtml("offline") : ""}
+    ${!forChp && d.dangerSignKeys.length ? warningHtml("danger_sign", d.dangerSignKeys.map(k => t(k)).join(" · ")) : ""}
+    ${!forChp && d.kind === "monitor_at_home" ? warningHtml("watch_sign", d.watchSignKeys.map(k => t(k)).join(" · ")) : ""}`;
+  return `<section class="stack5">
+    <header class="stack3">
+      <p class="eyebrow">${esc(t("nextAction"))}</p>
+      <h1 class="verdict ${d.kind}">${esc(decisionHeadline(d.kind))}</h1>
+      <p class="status-line">${esc(decisionStatus(d.kind))}</p>
+    </header>
+    ${action ? `<button class="primary" data-act="${action.act}">${esc(action.label)}</button>` : ""}
+    ${inner}
+    ${why.length ? disclosure("whyOpen", t("whyThis"), `<ul class="plain" style="gap:0.5rem; margin-top:0">${why.map(r => `<li class="label soft">${esc(r)}</li>`).join("")}</ul>`) : ""}
+  </section>`;
+}
+function carePathHtml(role) {
+  const r = state.referral; const e = state.encounter; if (!r || !e) return "";
+  const kind = e.decision ? e.decision.kind : null;
+  const view = describeReferral(role, r, kind);
+  const fails = activeFailures();
+  const missing = missingInfo(e.answers, r.askMore);
+  const followUps = followUpItems(role, r, kind);
+  const showArrivalInHeadline = role === "facility" && r.stage === "accepted" && view.arrivalMinutes !== null;
+  const headline = `${esc(view.headline)}${showArrivalInHeadline ? ` — ${tplNum(t("expectedArrivalTpl"), view.arrivalMinutes)}` : ""}`;
+  const travel = view.arrivalMinutes !== null && !showArrivalInHeadline
+    ? `<p class="body w600 soft">${tplNum(t("travelTpl"), view.arrivalMinutes)}</p>` : "";
+  const actionBtn = view.action ? `<button class="primary" data-act="ref:${view.action.id}">${esc(view.action.label)}</button>` : "";
+  const secondary = role === "facility" && (r.stage === "sent" || r.stage === "received")
+    ? disclosure("otherOpen", t("otherActions"),
+        `<button class="secondary-btn" data-act="ref:redirect">${esc(t("redirect"))}</button>
+         <button class="secondary-btn" data-act="ref:ask_more">${esc(t("askMore"))}</button>`)
+    : "";
+  const statusBlock = `<section class="stack5" aria-live="polite">
+    <header class="stack3">
+      <p class="eyebrow">${esc(t("referralEyebrow"))} · ${esc(view.stageLabel)}</p>
+      <h1 class="verdict" style="color:var(--ink)">${headline}</h1>
+      <p class="status-line">${esc(view.status)}</p>
+      ${travel}
+    </header>
+    ${actionBtn}
+    ${fails.map(n => warningHtml(n)).join("")}
+  </section>`;
+  if (role === "facility") {
+    return `<div class="stack4">${statusBlock}${handoffHtml(kind)}${facilityCardHtml(role, kind)}${secondary}
+      ${missing.length ? attentionHtml(t("missingInformation"), missing) : ""}</div>`;
+  }
+  if (role === "chp") {
+    return `<div class="stack4">${statusBlock}
+      ${attentionHtml(t("needsAction"), [...followUps, ...missing], followUps.length === 0 && missing.length === 0 ? t("nothingWaiting") : null)}
+      ${facilityCardHtml(role, kind)}
+      ${disclosure("moreOpen", t("moreDetail"), handoffHtml(kind))}</div>`;
+  }
+  return `<div class="stack4">${statusBlock}${facilityCardHtml(role, kind)}
+    ${disclosure("moreOpen", t("moreDetail"), handoffHtml(kind))}</div>`;
+}
+function homeHtml() {
+  const e = state.encounter; const r = state.referral;
+  const continueDetail = r
+    ? `${t("referralEyebrow")} · ${t(STAGE_LABEL[r.stage])}`
+    : e && e.decision
+      ? decisionHeadline(e.decision.kind)
+      : e && e.asked.length > 0
+        ? t("homeCardAssessTitle")
+        : null;
+  return `<section class="home">
+    <h1 class="home-title">Tunza</h1>
+    <p class="home-tagline">${esc(t("homeTagline"))}</p>
+    <button class="home-cta" data-act="view-path">${esc(t("homeGetStarted"))}</button>
+    <div class="home-cards">
+      <button class="home-card" data-act="view-path">
+        <p class="ct">${esc(t("homeCardAssessTitle"))}</p>
+        <p class="cd">${esc(t("homeCardAssessDesc"))}</p>
+      </button>
+      <button class="home-card" data-act="view-nearby">
+        <p class="ct">${esc(t("homeCardNearbyTitle"))}</p>
+        <p class="cd">${esc(t("homeCardNearbyDesc"))}</p>
+      </button>
+      ${continueDetail ? `<button class="home-card wide" data-act="view-path">
+        <p class="ct">${esc(t("homeCardContinueTitle"))}</p>
+        <p class="cd">${esc(continueDetail)}</p>
+      </button>` : ""}
+    </div>
+    <p class="home-mission">${esc(t("homeMission"))}</p>
+    <button class="home-link" data-act="health-worker">${esc(t("homeHealthWorker"))}</button>
+  </section>`;
+}
+function nearbyHtml() {
+  return `<div class="stack4">
+    <button class="back-btn" data-act="view-home">${esc(t("back"))}</button>
+    <h1 class="q">${esc(t("nearbyTitle"))}</h1>
+    <p class="label soft">${esc(t("nearbyDemoFallback"))}</p>
+    ${FACILITIES.map(f => `<article class="card">
+      <p class="eyebrow">${esc(t("facilityEyebrow"))}</p>
+      <h2 class="heading w600" style="margin-top:0.25rem">${esc(f.name)}</h2>
+      <p class="body w500 soft" style="margin-top:0.5rem">${tplNum(t("facilityTravelTpl"), f.travelMinutes)}</p>
+      <p class="body w600" style="margin-top:0.5rem">${esc(f.canHandleUrgent ? t("facilityUrgentCapable") : t("facilityGeneralCare"))}</p>
+      <p class="label soft" style="margin-top:0.5rem">${esc(f.services.join(" · "))}</p>
+    </article>`).join("")}
+  </div>`;
+}
+function surfaceHtml() {
+  const e = state.encounter; const r = state.referral;
+  if (state.role === "household" && state.view === "home") return homeHtml();
+  if (state.role === "household" && state.view === "nearby") return nearbyHtml();
+  if (state.role === "facility") {
+    if (!r) return attentionHtml(t("incomingTitle"), [{ id:"none", label:t("noIncoming"), detail:t("noIncomingDetail") }], null);
+    if (r.stage === "completed" && !r.outcome) {
+      const opts = [["treated","outcomeTreated"],["referred_onward","outcomeHigher"],["did_not_arrive","outcomeNoShow"]];
+      return `<section class="stack5">
+        <h1 class="q">${esc(t("outcomeQuestion"))}</h1>
+        <div class="stack2">${opts.map(([id, k]) => `<button class="choice" data-act="outcome:${id}">${esc(t(k))}</button>`).join("")}</div>
+        <button class="dont-know" data-act="outcome:unknown">${esc(t("dontKnow"))}</button>
+      </section>`;
+    }
+    return carePathHtml("facility");
+  }
+  if (state.role === "chp") {
+    if (!e) return attentionHtml(t("encounterTitle"), [{ id:"none", label:t("noEncounter"), detail:t("noEncounterDetail") }], null, { act:"reset", label:t("startEncounter") });
+    if (r) return carePathHtml("chp");
+    if (e.decision && !e.currentQuestion) {
+      const missing = missingInfo(e.answers, null);
+      const followUps = followUpItems("chp", null, e.decision.kind);
+      return `<div class="stack4">${decisionHtml(true)}
+        ${attentionHtml(t("missingInformation"), missing)}
+        ${attentionHtml(t("whoNeedsFollowUp"), followUps)}</div>`;
+    }
+    const missing = missingInfo(e.answers, null);
+    return `<div class="stack4">${assessmentFlowHtml()}
+      ${e.asked.length ? disclosure("missingOpen", t("missingInformation"), attentionHtml(null, missing)) : ""}</div>`;
+  }
+  if (r && e) return carePathHtml("household");
+  if (e && e.decision && !e.currentQuestion) return decisionHtml(false);
+  return assessmentFlowHtml();
+}
+function chromeHtml() {
+  const roles = [["household","roleHousehold"],["chp","roleChp"],["facility","roleFacility"]];
+  const roleLabel = t(roles.find(x => x[0] === state.role)[1]);
+  return `<header class="chrome">
+    <div class="chrome-row">
+      ${state.role === "household"
+        ? `<button class="wordmark" data-act="view-home">Tunza</button>`
+        : `<p class="wordmark">Tunza</p>`}
+      <div class="chrome-side">
+        <p class="label w500 soft">${esc(t("viewingAs"))} ${esc(roleLabel)}</p>
+        <button class="lang-btn" data-act="lang">${esc(t("languageButton"))}</button>
+      </div>
+    </div>
+    <button class="demo-summary ${ui.demoOpen ? "open" : ""}" data-ui="demoOpen" aria-expanded="${ui.demoOpen}">${esc(t("demoLabel"))}</button>
+    ${ui.demoOpen ? (() => {
+      const panel = `<div class="demo-panel">
+      <div class="seg">${roles.map(([id, k]) => `<button class="${state.role === id ? "on" : ""}" data-role="${id}">${esc(t(k))}</button>`).join("")}</div>
+      <p class="eyebrow">${esc(t("namedConditions"))}</p>
+      <div class="stack2" style="gap:0.25rem">
+        ${FAILURES.map(f => {
+          const active = f === "offline" ? isOffline() : state.injectedFailures.includes(f);
+          return `<label class="check-row"><input type="checkbox" data-failure="${f}" ${active ? "checked" : ""}><span class="w500">${esc(warningCopy(f).title)}</span></label>`;
+        }).join("")}
+      </div>
+      <button class="link-btn" data-act="reset">${esc(t("startOver"))}</button>
+    </div>`;
+      const onBrand = state.role === "household" && state.view === "home";
+      return onBrand ? `<div class="demo-paper">${panel}</div>` : panel;
+    })() : ""}
+  </header>`;
+}
+function render() {
+  persist();
+  const onBrand = state.role === "household" && state.view === "home";
+  document.querySelector(".stage").classList.toggle("on-brand", onBrand);
+  document.getElementById("phone").classList.toggle("on-brand", onBrand);
+  document.getElementById("phone").innerHTML = `
+    ${chromeHtml()}
+    <main>${surfaceHtml()}</main>
+    <footer class="phone-foot"><p>${esc(t("disclaimer"))}</p></footer>`;
+}
+
+/* ---------- events ---------- */
+document.getElementById("phone").addEventListener("click", (ev) => {
+  const el = ev.target.closest("[data-ui],[data-act],[data-answer],[data-role],[data-mode]");
+  if (!el) return;
+  if (el.dataset.ui) { ui[el.dataset.ui] = !ui[el.dataset.ui]; render(); return; }
+  if (el.dataset.role) { act.setRole(el.dataset.role); return; }
+  if (el.dataset.mode) { ui.entryMode = el.dataset.mode; render(); return; }
+  if (el.dataset.answer) { act.answer(state.encounter.currentQuestion, el.dataset.answer); return; }
+  const a = el.dataset.act;
+  if (!a) return;
+  if (a === "lang") act.setLocale(state.locale === "en" ? "sw" : "en");
+  else if (a === "view-home") act.setView("home");
+  else if (a === "view-path") act.setView("path");
+  else if (a === "view-nearby") act.setView("nearby");
+  else if (a === "health-worker") act.setRole("chp");
+  else if (a === "reset") act.reset();
+  else if (a === "back") act.goBack();
+  else if (a === "dont-know") act.answer(state.encounter.currentQuestion, state.encounter.currentQuestion === "what" ? "" : "unknown");
+  else if (a === "continue-what") act.answer("what", state.encounter.answers.presentation.trim());
+  else if (a === "prepare") act.prepareReferral();
+  else if (a === "one-more") act.continueForOneMore();
+  else if (a === "speak") toggleSpeak();
+  else if (a === "photo-remove") act.setPhoto(false);
+  else if (a.startsWith("ref:")) act.referral(a.slice(4));
+  else if (a.startsWith("outcome:")) act.referral("return_outcome", a.slice(8));
+});
+document.getElementById("phone").addEventListener("input", (ev) => {
+  const el = ev.target;
+  if (el.dataset && el.dataset.input === "presentation") {
+    act.setPresentation(el.value);
+    const btn = document.querySelector('[data-act="continue-what"]');
+    if (btn) btn.disabled = el.value.trim().length === 0 && !state.encounter.answers.photoAttached;
+  }
+});
+document.getElementById("phone").addEventListener("change", (ev) => {
+  const el = ev.target;
+  if (el.dataset && el.dataset.input === "photo") act.setPhoto(!!(el.files && el.files.length));
+  if (el.dataset && el.dataset.failure) act.toggleFailure(el.dataset.failure);
+});
+window.addEventListener("online", () => { state.online = true; render(); });
+window.addEventListener("offline", () => { state.online = false; render(); });
+
+document.documentElement.lang = state.locale;
+render();
+</script>

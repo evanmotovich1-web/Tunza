@@ -25,10 +25,14 @@ a wiki, not a diary.
 
 ## Current state (update when it changes)
 
-- **Prototype one is merged to `main`** (PR #2, 2026-08-26): one Next.js app,
-  household/CHP/facility surfaces, EN/SW throughout, matte red finish, the old
-  app's home screen as the landing. 66 tests, four green gates.
-- Interactive walkthrough artifact:
+- **Everything is merged to `main`** (through PR #5, 2026-08-27): prototype
+  one (three surfaces, EN/SW, matte red finish, full-red home from the old
+  app), the vault + SessionStart hook, and the voice/facility ports
+  (`/api/transcribe`, `/api/facilities`, designed fallbacks). 84 tests, four
+  green gates.
+- Interactive walkthrough artifact (source archived at
+  `docs/walkthrough.html`; opens on the English red home every load):
   https://claude.ai/code/artifact/8f8aa136-5685-4cc5-ab82-08b0e229d2ff
 - The earlier production app lives in `evanmotovich1-web/medical-triage`
-  (private) — the source for ports; read-only.
+  (private) — the source for ports; read-only. This repo is public unless
+  Evan flips it private (Settings → Danger Zone).
