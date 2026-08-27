@@ -2,6 +2,18 @@
 
 Dated, newest first. Each entry: what was decided, and why it holds.
 
+## 2026-08-27 — CHP and facility go behind an access gate
+Per Evan: the wordmark always returns to the home page; from home a regular
+person can only enter the household path, and CHP/facility require signing
+in. Implemented as a server-checked access-code gate (`/api/access`; codes
+in env, never shipped to the client; well-known demo codes CHP-DEMO /
+FACILITY-DEMO work until real codes are set, and the sign-in screen says
+so). Grants persist per device; Start over clears them; the reducer refuses
+gated roles without a grant so no caller can skip the gate. This is UX-level
+gating and the placeholder for real worker identity/sign-up — not account
+security. The demo role switcher was removed from the Demo panel (it was a
+backdoor around the gate).
+
 ## 2026-08-26 — The front door wears the brand
 The household landing is the old app's home screen rebuilt in the matte
 finish — the ONE full-brand surface (`--brand-deep` → `--action`). Per Evan's

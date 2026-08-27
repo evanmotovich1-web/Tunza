@@ -5,6 +5,7 @@ import { CarePath } from "@/components/CarePath";
 import { DecisionResult } from "@/components/DecisionResult";
 import { HomeScreen } from "@/components/HomeScreen";
 import { NearbyFacilities } from "@/components/NearbyFacilities";
+import { RoleGate } from "@/components/RoleGate";
 import { Warning } from "@/components/Warning";
 import { decisionHeadline, decisionStatus } from "@/lib/assessment";
 import { t } from "@/lib/copy";
@@ -33,9 +34,16 @@ export function HouseholdSurface() {
         onStart={() => dispatch.setView("path")}
         onNearby={() => dispatch.setView("nearby")}
         onContinue={() => dispatch.setView("path")}
-        onHealthWorker={() => dispatch.setRole("chp")}
+        onHealthWorker={() => {
+          dispatch.setGateRole(null);
+          dispatch.setView("gate");
+        }}
       />
     );
+  }
+
+  if (state.view === "gate") {
+    return <RoleGate />;
   }
 
   if (state.view === "nearby") {

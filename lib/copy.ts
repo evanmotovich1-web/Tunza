@@ -21,6 +21,16 @@ const en = {
   homeMission:
     "Built for community health workers where the nearest doctor may be hours away.",
   homeHealthWorker: "Are you a health worker?",
+  gateHeading: "Sign in to continue",
+  gateBody:
+    "This area is for registered health workers. Choose your role and enter your access code.",
+  gateChooseChp: "I'm a community health promoter",
+  gateChooseFacility: "I work at a facility",
+  gateCodeLabel: "Access code",
+  gateSubmit: "Sign in",
+  gateChecking: "Checking…",
+  gateWrongCode: "That code did not work. Check with your coordinator.",
+  gateDemoHint: "Demo codes: CHP-DEMO and FACILITY-DEMO.",
   nearbyTitle: "Nearby facilities",
   nearbyLocating: "Finding facilities near you…",
   nearbyDemoFallback: "Showing demo facilities — live lookup is not available right now.",
@@ -360,6 +370,16 @@ const sw: Record<CopyKey, string> = {
   homeMission:
     "Imetengenezwa kwa ajili ya wahudumu wa afya ya jamii ambapo daktari wa karibu anaweza kuwa masaa mengi mbali.",
   homeHealthWorker: "Wewe ni mhudumu wa afya?",
+  gateHeading: "Ingia ili kuendelea",
+  gateBody:
+    "Sehemu hii ni ya wahudumu wa afya waliosajiliwa. Chagua nafasi yako na uweke msimbo wako wa kuingia.",
+  gateChooseChp: "Mimi ni mhamasishaji wa afya ya jamii",
+  gateChooseFacility: "Nafanya kazi katika kituo cha afya",
+  gateCodeLabel: "Msimbo wa kuingia",
+  gateSubmit: "Ingia",
+  gateChecking: "Inakagua…",
+  gateWrongCode: "Msimbo huo haukufanya kazi. Wasiliana na mratibu wako.",
+  gateDemoHint: "Misimbo ya majaribio: CHP-DEMO na FACILITY-DEMO.",
   nearbyTitle: "Vituo vya karibu",
   nearbyLocating: "Inatafuta vituo karibu nawe…",
   nearbyDemoFallback:

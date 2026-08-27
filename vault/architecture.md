@@ -38,9 +38,16 @@ v1 is client-side and deterministic — no backend yet.
   ranked client-side. Nearby view falls back to the demo list with an honest
   note on any failure (no geolocation, denied, unanswered prompt via a 12s
   watchdog, offline, 503-unconfigured, zero results).
-- `.env.example` — `OPENAI_API_KEY`, `GOOGLE_PLACES_API_KEY`; both optional,
-  everything degrades by design without them. The repo is PUBLIC: keys live
-  only in `.env.local` / deploy env, never committed.
+- `app/api/access` + `components/RoleGate.tsx` — the health-worker gate:
+  POST checks role+code server-side (env `CHP_ACCESS_CODE` /
+  `FACILITY_ACCESS_CODE`; demo codes CHP-DEMO / FACILITY-DEMO until set, and
+  GET reports demo mode so the screen can say so). Grants live in state
+  (`grants`), enforced in the store reducer; wordmark → home from any role;
+  Start over clears grants. Placeholder for real worker identity.
+- `.env.example` — `OPENAI_API_KEY`, `GOOGLE_PLACES_API_KEY`,
+  `CHP_ACCESS_CODE`, `FACILITY_ACCESS_CODE`; all optional, everything
+  degrades by design without them. The repo is PUBLIC unless flipped: keys
+  live only in `.env.local` / deploy env, never committed.
 
 ## Quality gates (all must pass before any push)
 
