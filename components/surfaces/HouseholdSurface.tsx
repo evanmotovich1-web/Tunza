@@ -3,12 +3,11 @@
 import { AssessmentFlow } from "@/components/AssessmentFlow";
 import { CarePath } from "@/components/CarePath";
 import { DecisionResult } from "@/components/DecisionResult";
-import { FacilityCard } from "@/components/FacilityCard";
 import { HomeScreen } from "@/components/HomeScreen";
+import { NearbyFacilities } from "@/components/NearbyFacilities";
 import { Warning } from "@/components/Warning";
 import { decisionHeadline, decisionStatus } from "@/lib/assessment";
 import { t } from "@/lib/copy";
-import { DEMO_FACILITIES } from "@/lib/facilities";
 import { warningCopy } from "@/lib/failures";
 import { stageLabel } from "@/lib/referral";
 import { activeFailures, useCare } from "@/lib/store";
@@ -52,21 +51,7 @@ export function HouseholdSurface() {
         <h1 className="text-decision font-semibold tracking-tight text-ink">
           {t("nearbyTitle", locale)}
         </h1>
-        {DEMO_FACILITIES.map((facility) => (
-          <FacilityCard
-            key={facility.id}
-            locale={locale}
-            name={facility.name}
-            travelMinutes={facility.travelMinutes}
-            canHandle
-            services={facility.services}
-            statusLabel={
-              facility.canHandleUrgent
-                ? t("facilityUrgentCapable", locale)
-                : t("facilityGeneralCare", locale)
-            }
-          />
-        ))}
+        <NearbyFacilities locale={locale} />
       </div>
     );
   }

@@ -22,8 +22,15 @@ const en = {
     "Built for community health workers where the nearest doctor may be hours away.",
   homeHealthWorker: "Are you a health worker?",
   nearbyTitle: "Nearby facilities",
+  nearbyLocating: "Finding facilities near you…",
+  nearbyDemoFallback: "Showing demo facilities — live lookup is not available right now.",
   facilityUrgentCapable: "Can take urgent cases",
   facilityGeneralCare: "General care",
+  facilityHospital: "Hospital",
+  facilityClinic: "Clinic",
+  facilityPharmacy: "Pharmacy",
+  facilityDistanceTpl: "About {km} km away",
+  transcribing: "Transcribing…",
 
   // Who needs help?
   whoQuestion: "Who needs help?",
@@ -354,8 +361,16 @@ const sw: Record<CopyKey, string> = {
     "Imetengenezwa kwa ajili ya wahudumu wa afya ya jamii ambapo daktari wa karibu anaweza kuwa masaa mengi mbali.",
   homeHealthWorker: "Wewe ni mhudumu wa afya?",
   nearbyTitle: "Vituo vya karibu",
+  nearbyLocating: "Inatafuta vituo karibu nawe…",
+  nearbyDemoFallback:
+    "Vituo vya majaribio vinaonyeshwa — utafutaji wa moja kwa moja haupatikani sasa.",
   facilityUrgentCapable: "Inaweza kupokea dharura",
   facilityGeneralCare: "Huduma za kawaida",
+  facilityHospital: "Hospitali",
+  facilityClinic: "Kliniki",
+  facilityPharmacy: "Duka la dawa",
+  facilityDistanceTpl: "Takriban kilomita {km} kutoka hapa",
+  transcribing: "Inanukuu…",
 
   whoQuestion: "Nani anahitaji msaada?",
   whoSelf: "Mimi",

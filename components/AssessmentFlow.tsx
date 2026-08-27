@@ -6,7 +6,7 @@ import { Warning } from "@/components/Warning";
 import { t } from "@/lib/copy";
 import { warningCopy } from "@/lib/failures";
 import { questionContent, dontKnowValue } from "@/lib/questions";
-import { speechSupported, startSpeech } from "@/lib/speech";
+import { startVoice, voiceAvailable, type VoiceHandle, type VoiceState } from "@/lib/voice";
 import { activeFailures, useCare } from "@/lib/store";
 
 export function AssessmentFlow() {
@@ -15,13 +15,13 @@ export function AssessmentFlow() {
   const question = encounter?.currentQuestion;
   const locale = state.locale;
   const [mode, setMode] = useState<EntryMode>("type");
-  const [listening, setListening] = useState(false);
+  const [voiceState, setVoiceState] = useState<Exclude<VoiceState, "unavailable" | "stopped"> | "idle">("idle");
   const [speakMessage, setSpeakMessage] = useState<string | undefined>();
-  const speechRef = useRef<{ stop: () => void } | null>(null);
+  const voiceRef = useRef<VoiceHandle | null>(null);
 
   useEffect(() => {
     return () => {
-      speechRef.current?.stop();
+      voiceRef.current?.stop();
     };
   }, []);
 
@@ -39,40 +39,55 @@ export function AssessmentFlow() {
       named === "weak_connection" ||
       named === "incomplete_assessment",
   );
+  const offline = failures.includes("offline");
 
   function onDontKnow() {
     dispatch.answer(currentQuestion, dontKnowValue(currentQuestion));
   }
 
   function onSpeak() {
-    if (!speechSupported()) {
+    if (voiceState === "transcribing") {
+      return;
+    }
+    if (voiceState === "listening") {
+      voiceRef.current?.stop();
+      return;
+    }
+    if (!voiceAvailable()) {
       setSpeakMessage(t("speakUnavailable", locale));
       setMode("type");
       return;
     }
-    if (listening) {
-      speechRef.current?.stop();
-      setListening(false);
-      return;
-    }
     setSpeakMessage(undefined);
-    setListening(true);
-    const handle = startSpeech(
-      (text) => {
-        const next = currentEncounter.answers.presentation
-          ? `${currentEncounter.answers.presentation} ${text}`
-          : text;
-        dispatch.setPresentation(next);
-      },
-      () => setListening(false),
+    voiceRef.current = startVoice({
       locale,
-    );
-    speechRef.current = handle;
-    if (!handle) {
-      setListening(false);
-      setSpeakMessage(t("speakUnavailable", locale));
-    }
+      online: !offline,
+      onText: (text) => {
+        const current = currentEncounter.answers.presentation;
+        dispatch.setPresentation(current ? `${current} ${text}` : text);
+      },
+      onState: (next) => {
+        if (next === "listening" || next === "transcribing") {
+          setVoiceState(next);
+          return;
+        }
+        setVoiceState("idle");
+        if (next === "unavailable") {
+          setSpeakMessage(t("speakUnavailable", locale));
+          setMode("type");
+        }
+      },
+    });
   }
+
+  const speakLabel =
+    voiceState === "listening"
+      ? t("listening", locale)
+      : voiceState === "transcribing"
+        ? t("transcribing", locale)
+        : voiceAvailable()
+          ? t("tapToSpeak", locale)
+          : t("speakNotAvailable", locale);
 
   return (
     <div className="flex flex-col gap-4">
@@ -127,8 +142,9 @@ export function AssessmentFlow() {
                 onMode: setMode,
                 text: currentEncounter.answers.presentation,
                 onText: dispatch.setPresentation,
-                listening,
-                speakAvailable: speechSupported(),
+                listening: voiceState !== "idle",
+                speakAvailable: voiceAvailable(),
+                speakLabel,
                 onSpeak,
                 speakMessage,
                 photoAttached: currentEncounter.answers.photoAttached,

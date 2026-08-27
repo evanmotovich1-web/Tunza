@@ -16,6 +16,7 @@ type EntryProps = {
   onText: (text: string) => void;
   listening: boolean;
   speakAvailable: boolean;
+  speakLabel?: string;
   onSpeak: () => void;
   speakMessage?: string;
   photoAttached: boolean;
@@ -101,6 +102,7 @@ function EntryControls({
   onText,
   listening,
   speakAvailable,
+  speakLabel,
   onSpeak,
   speakMessage,
   photoAttached,
@@ -135,6 +137,12 @@ function EntryControls({
         ))}
       </div>
 
+      {speakMessage ? (
+        <p className="text-label text-ink-soft" role="status">
+          {speakMessage}
+        </p>
+      ) : null}
+
       {mode === "speak" ? (
         <div className="flex flex-col gap-3">
           <button
@@ -142,15 +150,13 @@ function EntryControls({
             onClick={onSpeak}
             className="min-h-14 rounded-2xl border border-line bg-raised px-4 text-left text-body font-semibold text-ink"
           >
-            {listening
-              ? t("listening", locale)
-              : speakAvailable
-                ? t("tapToSpeak", locale)
-                : t("speakNotAvailable", locale)}
+            {speakLabel ??
+              (listening
+                ? t("listening", locale)
+                : speakAvailable
+                  ? t("tapToSpeak", locale)
+                  : t("speakNotAvailable", locale))}
           </button>
-          {speakMessage ? (
-            <p className="text-label text-ink-soft">{speakMessage}</p>
-          ) : null}
           {text ? (
             <p className="rounded-xl bg-raised px-3 py-2 text-body text-ink">{text}</p>
           ) : null}
