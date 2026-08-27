@@ -243,7 +243,7 @@ Because this is a health product, the red is carried under a strict two-red disc
   --paper        #f4efe6   the app surface
   --raised       #fffcf7   cards, inputs
 
-The front door wears the brand; every working screen wears paper. The household home screen — carried over from the earlier Tunza app's landing — is the one full-brand surface: a deep matte red ground (brand-deep to Tunza Red), the tagline, one inverted primary action (raised surface, brand-red text), quiet frosted cards for the secondary paths, and the mission line. The moment work begins, the product returns to paper, and red returns to being scarce.
+The front door wears the brand; every working screen wears paper. The household home screen — carried over from the earlier Tunza app's landing — is the one full-brand surface, and it is full-screen: the ground, the header chrome, and the footer all wear the red (brand-deep to Tunza Red), with the wordmark and controls in white on it. On it: the tagline, one inverted primary action (raised surface, brand-red text), quiet frosted cards for the secondary paths, and the mission line. The moment work begins, the product returns to paper, and red returns to being scarce.
 
 The monitor-at-home verdict stays calm blue, and doubly so now: red–green is the most impaired axis of human color vision, and with red carrying the brand there is no green in the product to be confused with. Amber for "today" and "degraded" follows the same severity ladder clinical alerting uses (red above orange above yellow).
 

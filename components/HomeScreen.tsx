@@ -1,7 +1,8 @@
 /**
  * The household landing — the one full-brand surface in the product, carried
- * over from the earlier Tunza app's home screen. Everything after this screen
- * wears paper; the front door wears Tunza Red.
+ * over from the earlier Tunza app's home screen. The shell paints the whole
+ * screen red on this view (chrome and footer included); this component is the
+ * content. Everything after this screen wears paper.
  */
 
 import { t, type Locale } from "@/lib/copy";
@@ -26,7 +27,7 @@ export function HomeScreen({
   const card =
     "rounded-2xl border border-white/15 bg-white/10 p-4 text-left text-white transition hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
   return (
-    <section className="-m-5 flex min-h-full grow flex-col bg-linear-to-b from-brand-deep to-action p-6 text-white">
+    <section className="flex min-h-full grow flex-col text-white">
       <div className="mt-10">
         <h1 className="text-[3rem] font-bold leading-none tracking-tight">Tunza</h1>
         <p className="mt-3 text-heading font-normal text-white/85">

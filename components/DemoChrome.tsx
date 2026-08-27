@@ -15,19 +15,68 @@ const ROLES: { id: Role; labelKey: CopyKey }[] = [
 export function DemoChrome() {
   const { state, dispatch, offline } = useCare();
   const locale = state.locale;
+  const onBrand = state.role === "household" && state.view === "home";
 
   useEffect(() => {
     document.documentElement.lang = locale;
   }, [locale]);
 
+  const demoPanel = (
+    <div className="mt-3 flex flex-col gap-3">
+      <div className="grid grid-cols-3 gap-1 rounded-xl bg-line/70 p-1">
+        {ROLES.map((role) => (
+          <button
+            key={role.id}
+            type="button"
+            onClick={() => dispatch.setRole(role.id)}
+            className={`min-h-10 rounded-lg text-label font-medium ${
+              state.role === role.id ? "bg-raised text-ink shadow-sm" : "text-ink-soft"
+            }`}
+          >
+            {t(role.labelKey, locale)}
+          </button>
+        ))}
+      </div>
+      <p className="text-caption font-medium uppercase tracking-[0.12em] text-ink-soft">
+        {t("namedConditions", locale)}
+      </p>
+      <div className="flex flex-col gap-1">
+        {INJECTABLE_FAILURES.map((failure) => (
+          <label key={failure} className="flex items-center gap-2 text-label text-ink">
+            <input
+              type="checkbox"
+              checked={isActive(failure, state.injectedFailures, offline)}
+              onChange={() => dispatch.toggleFailure(failure)}
+              className="size-4 accent-action"
+            />
+            <span className="font-medium">{warningCopy(failure, locale).title}</span>
+          </label>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={dispatch.reset}
+        className="min-h-10 self-start text-label font-medium text-ink-soft underline"
+      >
+        {t("startOver", locale)}
+      </button>
+    </div>
+  );
+
   return (
-    <header className="sticky top-0 z-10 border-b border-line/80 bg-paper/95 px-5 py-3 backdrop-blur">
+    <header
+      className={`sticky top-0 z-10 border-b px-5 py-3 backdrop-blur ${
+        onBrand ? "border-white/15 bg-brand-deep/95" : "border-line/80 bg-paper/95"
+      }`}
+    >
       <div className="flex items-center justify-between gap-3">
         {state.role === "household" ? (
           <button
             type="button"
             onClick={() => dispatch.setView("home")}
-            className="text-heading font-semibold tracking-tight text-action"
+            className={`text-heading font-semibold tracking-tight ${
+              onBrand ? "text-white focus-visible:outline-white" : "text-action"
+            }`}
           >
             Tunza
           </button>
@@ -35,7 +84,9 @@ export function DemoChrome() {
           <p className="text-heading font-semibold tracking-tight text-action">Tunza</p>
         )}
         <div className="flex items-center gap-3">
-          <p className="text-label font-medium text-ink-soft">
+          <p
+            className={`text-label font-medium ${onBrand ? "text-white/70" : "text-ink-soft"}`}
+          >
             {t("viewingAs", locale)}{" "}
             {t(ROLES.find((item) => item.id === state.role)?.labelKey ?? "roleHousehold", locale)}
           </p>
@@ -43,55 +94,29 @@ export function DemoChrome() {
             type="button"
             onClick={() => dispatch.setLocale(locale === "en" ? "sw" : "en")}
             aria-label={t("languageAria", locale)}
-            className="min-h-10 rounded-lg border border-line px-2 text-label font-medium text-ink"
+            className={`min-h-10 rounded-lg border px-2 text-label font-medium ${
+              onBrand
+                ? "border-white/30 bg-white/10 text-white focus-visible:outline-white"
+                : "border-line text-ink"
+            }`}
           >
             {t("languageButton", locale)}
           </button>
         </div>
       </div>
       <details className="mt-2">
-        <summary className="cursor-pointer text-label font-medium text-ink-soft">
+        <summary
+          className={`cursor-pointer text-label font-medium ${
+            onBrand ? "text-white/70" : "text-ink-soft"
+          }`}
+        >
           {t("demoLabel", locale)}
         </summary>
-        <div className="mt-3 flex flex-col gap-3">
-          <div className="grid grid-cols-3 gap-1 rounded-xl bg-line/70 p-1">
-            {ROLES.map((role) => (
-              <button
-                key={role.id}
-                type="button"
-                onClick={() => dispatch.setRole(role.id)}
-                className={`min-h-10 rounded-lg text-label font-medium ${
-                  state.role === role.id ? "bg-raised text-ink shadow-sm" : "text-ink-soft"
-                }`}
-              >
-                {t(role.labelKey, locale)}
-              </button>
-            ))}
-          </div>
-          <p className="text-caption font-medium uppercase tracking-[0.12em] text-ink-soft">
-            {t("namedConditions", locale)}
-          </p>
-          <div className="flex flex-col gap-1">
-            {INJECTABLE_FAILURES.map((failure) => (
-              <label key={failure} className="flex items-center gap-2 text-label text-ink">
-                <input
-                  type="checkbox"
-                  checked={isActive(failure, state.injectedFailures, offline)}
-                  onChange={() => dispatch.toggleFailure(failure)}
-                  className="size-4 accent-action"
-                />
-                <span className="font-medium">{warningCopy(failure, locale).title}</span>
-              </label>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={dispatch.reset}
-            className="min-h-10 self-start text-label font-medium text-ink-soft underline"
-          >
-            {t("startOver", locale)}
-          </button>
-        </div>
+        {onBrand ? (
+          <div className="mt-3 rounded-2xl bg-paper p-3 text-ink">{demoPanel}</div>
+        ) : (
+          demoPanel
+        )}
       </details>
     </header>
   );
